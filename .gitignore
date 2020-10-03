@@ -1,0 +1,10 @@
+*.o
+*.s
+*.xls
+*.out
+*.bin
+bootsect
+build
+system
+user
+
