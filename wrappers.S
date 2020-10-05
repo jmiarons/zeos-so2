@@ -44,3 +44,47 @@ end_write:
 	movl %ebp, %esp;
 	popl %ebp;
 	ret;
+
+ENTRY(gettime)
+	/*link Dinamico*/
+	pushl %ebp;
+	movl %esp, %ebp;	
+	
+	/*ID*/	
+	movl $10, %eax;
+
+	/*Salvamos los regs que machacamos*/
+	pushl %ecx;
+	pushl %edx;
+
+	/*@ de retorno*/
+	leal time_ret, %edi;
+	pushl %edi;
+
+	/*Fake dynamic link*/
+	pushl %ebp
+	movl %esp, %ebp;
+		
+
+	sysenter
+
+time_ret:
+	
+	movl %ebp, %esp;
+	popl %ebp;
+
+	cmpl $0, %eax;
+	jge end_time;
+	negl %eax;	
+	movl %eax, errno;
+	movl $-1, %eax;
+
+end_time:
+	popl %edi;
+	popl %edx;
+	popl %ecx;
+	movl %ebp, %esp;
+	popl %ebp;
+	ret;
+	
+

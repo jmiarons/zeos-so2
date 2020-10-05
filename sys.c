@@ -15,8 +15,11 @@
 
 #include <errno.h>
 
+#include <system.h>
+
 #define LECTURA 0
 #define ESCRIPTURA 1
+
 
 int check_fd(int fd, int permissions)
 {
@@ -69,5 +72,9 @@ int sys_write(int fd, char * buffer, int size) {
 	num_b += sys_write_console(buff, size);
 	size = 0;
 	return num_b;
+}
+
+int sys_gettime() {
+	return zeos_ticks;
 }
 
