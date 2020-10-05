@@ -11,8 +11,9 @@
 #include <mm.h>
 #include <io.h>
 #include <utils.h>
-#include <entry.h>
 #include <zeos_mm.h> /* TO BE DELETED WHEN ADDED THE PROCESS MANAGEMENT CODE TO BECOME MULTIPROCESS */
+
+#include <entry.h>
 
 
 int (*usr_main)(void) = (void *) PH_USER_START;
@@ -81,7 +82,7 @@ int __attribute__((__section__(".text.main")))
   setIdt(); /* Definicio del vector de interrupcions */
 	writeMSR(0x174, __KERNEL_CS);
 	writeMSR(0x175, INITIAL_ESP);
-	writeMSR(0x176, syscall_handler_sysenter);
+	writeMSR(0x176, (int)syscall_handler_sysenter);
 
 	
   setTSS(); /* Definicio de la TSS */

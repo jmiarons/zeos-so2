@@ -85,11 +85,11 @@ ENTRY(clock_handler)
 	iret
 
 ENTRY(syscall_handler_sysenter)
-	push $__USER_DS
-	push %ebp
+	pushl $__USER_DS
+	pushl %ebp
 	pushfl
-	push $__USER_CS
-	push 4(%ebp)
+	pushl $__USER_CS
+	pushl 4(%ebp)
 	SAVE_ALL
 	cmpl $0, %eax
 	jl sysenter_err

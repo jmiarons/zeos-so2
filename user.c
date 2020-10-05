@@ -2,6 +2,8 @@
 
 char buff[24];
 
+char *a = "Hello World blyat\n";
+
 int pid;
 
 int addASM(int, int);
@@ -13,6 +15,7 @@ int __attribute__ ((__section__(".text.main")))
      /* __asm__ __volatile__ ("mov %0, %%cr3"::"r" (0) ); */
 
 	int local = addASM(0x43, 0x666);
-    
+	int num = write(1,a, strlen(a));    
+	
   while(1) { }
 }

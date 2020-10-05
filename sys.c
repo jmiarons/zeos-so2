@@ -13,6 +13,8 @@
 
 #include <sched.h>
 
+#include <errno.h>
+
 #define LECTURA 0
 #define ESCRIPTURA 1
 
@@ -47,9 +49,25 @@ void sys_exit()
 }
 
 int sys_write(int fd, char * buffer, int size) {
-	int ok = check_fd(fd, ESCRIPTURA);		
-    if (!ok || buffer == NULL || size < 0) return -1;
-    //copy from user
-    return sys_write_console(buffer, size);
+	int ok = check_fd(fd, ESCRIPTURA);
+	if (ok < 0) return EBADFD;
+	if (buffer == NULL) return EFAULT; 
+	if (size < 0) return EINVAL;
+	
+	char buff[64];
+	int num_b = 0;
+	while (size > 64) {
+		copy_from_user(buffer, buff, 64);
+
+		num_b += sys_write_console(buff, 64);
+	
+		buffer += 64;
+		size -= 64;
+	}
+
+	copy_from_user(buffer, buff, size);
+	num_b += sys_write_console(buff, size);
+	size = 0;
+	return num_b;
 }
 
