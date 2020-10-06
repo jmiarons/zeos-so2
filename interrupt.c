@@ -105,8 +105,8 @@ void keyboard_routine() {
 }
 
 void clock_routine() {
-	zeos_show_clock();
 	++zeos_ticks;
+	zeos_show_clock();
 }
 
 
