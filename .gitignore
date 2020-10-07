@@ -3,8 +3,9 @@
 *.xls
 *.out
 *.bin
+*.txt
 bootsect
 build
 system
 user
-
+*.swp
