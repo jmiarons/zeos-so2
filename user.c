@@ -15,11 +15,10 @@ int __attribute__ ((__section__(".text.main")))
      /* __asm__ __volatile__ ("mov %0, %%cr3"::"r" (0) ); */
 
 	int local = addASM(0x43, 0x666);
-	int aux = write(1, a, strlen(a));
+	int aux = write(1, a, -2);
 	if (aux < 0) {
 		write(1, "error\n", 6);
-		itoa(errno, buff);
-		write(1, buff, strlen(buff));
+        perror();
 	}
 	else {
 		itoa(aux, buff);
@@ -32,7 +31,7 @@ int __attribute__ ((__section__(".text.main")))
 		if (i % 1000 == 0) {
 			int f = gettime();
 			itoa(f, buff);
-			write(1, buff, strlen(buff));
+	//		write(1, buff, strlen(buff));
 		}
 		++i;
 	}

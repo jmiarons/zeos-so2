@@ -72,11 +72,11 @@
 #define ESRMNT 69 //Srmount error
 #define ECOMM 70 //Communication error on send
 #define EPROTO 71 //Protocol error
-#define EMULTIHOP //72 Multihop attempted
+#define EMULTIHOP 72 //Multihop attempted
 #define EDOTDOT 73 //RFS specific error
 #define EBADMSG 74 //Bad message
-#define EOVERFLOW //75 Value too large for defined data type
-#define ENOTUNIQ //76 Name not unique on network
+#define EOVERFLOW 75 //Value too large for defined data type
+#define ENOTUNIQ 76 //Name not unique on network
 #define EBADFD 77 //File descriptor in bad state
 #define EREMCHG 78 //Remote address changed
 #define ELIBACC 79 //Can not access a needed shared library
