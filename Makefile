@@ -39,6 +39,7 @@ LIBZEOS = -L . -l zeos
 
 #add to USROBJ any object files required to complete the user program
 USROBJ = \
+	perrormessage.o \
 	libc.o \
 	suma.o \
 	wrappers.o\
@@ -84,6 +85,8 @@ io.o:io.c $(INCLUDEDIR)/io.h
 sched.o:sched.c $(INCLUDEDIR)/sched.h
 
 libc.o:libc.c $(INCLUDEDIR)/libc.h
+
+perrormessage.o:perrormessage.c $(INCLUDEDIR)/perrormessage.h
 
 mm.o:mm.c $(INCLUDEDIR)/types.h $(INCLUDEDIR)/mm.h
 
