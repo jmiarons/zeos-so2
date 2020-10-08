@@ -100,7 +100,9 @@ void keyboard_routine() {
 	unsigned int aux = reg & 0x00000080;
 	key = char_map[reg & 0x7F];
 	if (!aux) {
+		if (key =='\0') key = 'C';
 		printc_xy(0,0, key);
+		
 	}
 }
 
