@@ -13,7 +13,6 @@
 #define KERNEL_STACK_SIZE	1024
 #define INVALID -1
 
-
 enum state_t { ST_RUN, ST_READY, ST_BLOCKED };
 
 extern int next_PID;
@@ -23,7 +22,7 @@ struct task_struct {
   page_table_entry * dir_pages_baseAddr;
   struct list_head list;
 
-  unisgned long kernel_esp;
+  unsigned long kernel_esp;
 };
 
 union task_union {
@@ -33,6 +32,7 @@ union task_union {
 
 extern union task_union task[NR_TASKS]; /* Vector de tasques */
 
+struct task_struct * idle_task;
 
 #define KERNEL_ESP(t)       	(DWord) &(t)->stack[KERNEL_STACK_SIZE]
 
@@ -62,5 +62,7 @@ void sched_next_rr();
 void update_process_state_rr(struct task_struct *t, struct list_head *dest);
 int needs_sched_rr();
 void update_sched_data_rr();
+
+void init_queues();
 
 #endif  /* __SCHED_H__ */

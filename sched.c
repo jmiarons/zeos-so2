@@ -55,7 +55,21 @@ void cpu_idle(void)
 }
 
 void init_idle (void) {
+  struct list_head* first = list_first(&freequeue);
+  list_del(first);
+  struct task_struct* task_s = list_head_to_task_struct(first);
+  union task_union* task_u = (union task_union *) task_s;
 
+  task_s -> PID = 0;
+
+  allocate_DIR(task_s);
+
+  task_u -> stack[KERNEL_STACK_SIZE-1] = (unsigned long)&cpu_idle;
+  task_u -> stack[KERNEL_STACK_SIZE-2] = 0;
+
+  task_u -> task.kernel_esp = (unsigned long)&task_u -> stack[KERNEL_STACK_SIZE-2];
+
+  idle_task = task_s;
 }
 
 void init_task1(void) {
