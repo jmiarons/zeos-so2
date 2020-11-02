@@ -43,27 +43,27 @@ int sys_fork()
   int PID=-1;
 
   // creates the child process
-  
+
   return PID;
 }
 
 void sys_exit()
-{  
+{
 }
 
 int sys_write(int fd, char * buffer, int size) {
 	int ok = check_fd(fd, ESCRIPTURA);
 	if (ok < 0) return -EBADFD;
-	if (buffer == NULL) return -EFAULT; 
+	if (buffer == NULL) return -EFAULT;
 	if (size < 0) return -EINVAL;
-	
+
 	char buff[64];
 	int num_b = 0;
 	while (size > 64) {
 		copy_from_user(buffer, buff, 64);
 
 		num_b += sys_write_console(buff, 64);
-	
+
 		buffer += 64;
 		size -= 64;
 	}
@@ -77,4 +77,3 @@ int sys_write(int fd, char * buffer, int size) {
 int sys_gettime() {
 	return zeos_ticks;
 }
-

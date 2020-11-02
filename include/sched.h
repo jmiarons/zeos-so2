@@ -11,12 +11,19 @@
 
 #define NR_TASKS      10
 #define KERNEL_STACK_SIZE	1024
+#define INVALID -1
+
 
 enum state_t { ST_RUN, ST_READY, ST_BLOCKED };
+
+extern int next_PID;
 
 struct task_struct {
   int PID;			/* Process ID. This MUST be the first field of the struct. */
   page_table_entry * dir_pages_baseAddr;
+  struct list_head list;
+
+  unisgned long kernel_esp;
 };
 
 union task_union {

@@ -2,7 +2,7 @@
 
 char buff[24];
 
-char *a = "asdf\n";
+char *a = "Perdon por confundir un puntero con un vector\n";
 
 int pid;
 
@@ -15,7 +15,7 @@ int __attribute__ ((__section__(".text.main")))
      /* __asm__ __volatile__ ("mov %0, %%cr3"::"r" (0) ); */
 
 	
-	int aux = write(1, a, -2);
+	int aux = write(1, a, strlen(a));
 	if (aux < 0) {
 		write(1, "error\n", 6);
         perror();

@@ -118,4 +118,8 @@ ENTRY(writeMSR)
 	popl %ebp
 	ret
 
+ENTRY(getEbp)
+  movl %ebp, %eax;
+  ret;
 
+ENTRY(setEsp)
