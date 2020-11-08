@@ -120,12 +120,17 @@ struct task_struct* current()
 
 
 void inner_task_switch(union task_union *t) {
-  struct task_struct *curr = current();
 
   writeMSR(0x175, (unsigned int) KERNEL_ESP(t)); /*Usamos sysenter*/
   set_cr3(t->task.dir_pages_baseAddr);
-
-
-
-
+  unsigned long current_kesp = current()->kernel_esp;
+  unsigned long new_kesp = t->task.kernel_esp;
+	__asm__ __volatile__ (
+		"movl %%ebp,%0;"
+		"movl %1,%%esp;"
+		"popl %%ebp;"
+		"ret;"
+		:
+		: "g" (current_kesp), "g" (new_kesp)
+	);
 }
