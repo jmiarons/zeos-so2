@@ -133,9 +133,3 @@ ENTRY(task_switch)
     movl %ebp, %esp;
     popl %ebp;
     ret;
-
-ENTRY(getEbp)
-  movl %ebp, %eax;
-  ret;
-
-ENTRY(setEsp)

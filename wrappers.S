@@ -116,3 +116,32 @@ getpid_ret:
 	movl %ebp, %esp;
 	popl %ebp;
 	ret;
+
+ENTRY(fork)
+	pushl %ebp;
+	movl %esp, %ebp;
+
+	/*ID*/
+	movl $2, %eax
+
+/*Salvamos los regs que machacamos*/
+	pushl %ecx;
+	pushl %edx;
+
+	/*@ de retorno*/
+	leal fork_ret, %edi;
+	pushl %edi;
+
+	/*Fake dynamic link*/
+	pushl %ebp;
+	movl %esp, %ebp;
+
+	sysenter;
+
+fork_ret:
+	popl %edi;
+	popl %edx;
+	popl %ecx;
+	movl %ebp, %esp;
+	popl %ebp;
+	ret;

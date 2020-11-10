@@ -9,8 +9,6 @@ void clock_handler();
 
 void writeMSR(int reg, int val);
 
-void task_switch(union task_union *new);
-
 void syscall_handler_sysenter();
 
 #endif  /* __ENTRY_H__ */

@@ -17,6 +17,9 @@
 
 #include <system.h>
 
+#include <sched.h>
+
+
 #define LECTURA 0
 #define ESCRIPTURA 1
 
@@ -38,12 +41,64 @@ int sys_getpid()
 	return current()->PID;
 }
 
-int sys_fork()
-{
-  int PID=-1;
+int ret_from_fork() {
+  return 0;
+}
 
-  // creates the child process
+int sys_fork() {
 
+  int PID = -1;
+  /*PCB y tp del proceso padre*/
+  struct task_struct* father_task_s = current();
+  union task_union* father_task_u = (union task_union *) father_task_s;
+  page_table_entry* father_pt = get_PT(father_task_s);
+
+  /*Si no hay espacio devolvemos un error*/
+  if (list_empty(&freequeue)) return -EAGAIN;
+
+  /*PCB nuevo para el proceso hijo*/
+  struct list_head* first = list_first(&freequeue);
+  list_del(first);
+  struct task_struct* task_s = list_head_to_task_struct(first);
+  union task_union* task_u = (union task_union *) task_s;
+
+  /*Copiamos el contexto del padre al hijo*/
+  copy_data((void *) father_task_u,(void *) task_u, sizeof(union task_union));
+
+  /*Asignamos memoria al hijo*/
+  int mem_phys[NUM_PAG_DATA];
+  int i;
+  for (i = 0; i < NUM_PAG_DATA; ++i) {
+    mem_phys[i] = alloc_frame();
+    if (mem_phys[i] == -1) {
+      free(i, mem_phys);
+      return -ENOMEM;
+    }
+  }
+
+  allocate_DIR(task_s);
+  page_table_entry* pt = get_PT(task_s);
+
+  for (i = 0; i < NUM_PAG_CODE; ++i) {
+    pt[PAG_LOG_INIT_CODE + i].entry = father_pt[PAG_LOG_INIT_CODE +i].entry;
+  }
+
+  for (i = 0; i < NUM_PAG_DATA; ++i) {
+    set_ss_pag(father_pt, PAG_LOG_INIT_DATA+NUM_PAG_DATA, mem_phys[i]);
+    set_ss_pag(pt, PAG_LOG_INIT_DATA + i, mem_phys[i]);
+    copy_data((int *)((PAG_LOG_INIT_DATA + i) << 12), (int *) ((PAG_LOG_INIT_DATA + NUM_PAG_DATA) << 12),PAGE_SIZE);
+    del_ss_pag(father_pt, PAG_LOG_INIT_DATA + NUM_PAG_DATA);
+  }
+  set_cr3(get_DIR(father_task_s)); //flush TLB
+  task_u->task.PID = next_PID;
+  PID = next_PID;
+  ++next_PID;
+
+  task_u->stack[KERNEL_STACK_SIZE-18] = (unsigned long)&ret_from_fork;
+  task_u->stack[KERNEL_STACK_SIZE-19] = 0; //fake ebp
+  task_u->task.kernel_esp = task_u->stack[KERNEL_STACK_SIZE - 19];
+
+  list_add_tail(first, &readyqueue);
   return PID;
 }
 

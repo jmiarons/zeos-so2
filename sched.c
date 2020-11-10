@@ -47,7 +47,7 @@ int allocate_DIR(struct task_struct *t)
 void cpu_idle(void)
 {
 	__asm__ __volatile__("sti": : :"memory");
-
+  printk("IDLE\n");
 	while(1)
 	{
 	;
@@ -69,7 +69,7 @@ void init_idle (void) {
 
   task_u -> task.kernel_esp = (unsigned long)&task_u -> stack[KERNEL_STACK_SIZE-2];
 
-  idle_task = task_s;
+  idle_task = task_u;
 }
 
 void init_task1(void) {
