@@ -88,8 +88,8 @@ int sys_fork() {
     set_ss_pag(pt, PAG_LOG_INIT_DATA + i, mem_phys[i]);
     copy_data((int *)((PAG_LOG_INIT_DATA + i) << 12), (int *) ((PAG_LOG_INIT_DATA + NUM_PAG_DATA) << 12),PAGE_SIZE);
     del_ss_pag(father_pt, PAG_LOG_INIT_DATA + NUM_PAG_DATA);
+    set_cr3(get_DIR(father_task_s)); //flush TLB
   }
-  set_cr3(get_DIR(father_task_s)); //flush TLB
   task_u->task.PID = next_PID;
   PID = next_PID;
   ++next_PID;
