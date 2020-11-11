@@ -8,6 +8,7 @@
 #include <io.h>
 #include <keyboard.h>
 #include <entry.h>
+#include <sched.h>
 
 #include <zeos_interrupt.h>
 
@@ -101,6 +102,7 @@ void keyboard_routine() {
 	key = char_map[reg & 0x7F];
 	if (!aux) {
 		if (key =='\0') key = 'C';
+        if (key == 'd') task_switch(idle_task);
 		printc_xy(0,0, key);
 	}
 }
@@ -108,4 +110,5 @@ void keyboard_routine() {
 void clock_routine() {
 	++zeos_ticks;
 	zeos_show_clock();
+  update_sched_data_rr();
 }

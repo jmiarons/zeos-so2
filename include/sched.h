@@ -24,6 +24,8 @@ struct task_struct {
   int PID;			/* Process ID. This MUST be the first field of the struct. */
   page_table_entry * dir_pages_baseAddr;
   struct list_head list;
+  enum state_t state;
+  int quantum;
 
   unsigned long kernel_esp;
 };
@@ -60,11 +62,15 @@ page_table_entry * get_PT (struct task_struct *t) ;
 
 page_table_entry * get_DIR (struct task_struct *t) ;
 
+int get_quantum (struct task_struct *t);
+void set_quantum (struct task_struct *t, int new_quantum);
+
 /* Headers for the scheduling policy */
 void sched_next_rr();
 void update_process_state_rr(struct task_struct *t, struct list_head *dest);
 int needs_sched_rr();
 void update_sched_data_rr();
+void enqueue_process();
 
 void init_queues();
 

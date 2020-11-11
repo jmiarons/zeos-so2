@@ -20,6 +20,7 @@ int next_PID = 1000;
 extern struct list_head blocked;
 struct list_head freequeue;
 struct list_head readyqueue;
+int quantum_left;
 
 /* get_DIR - Returns the Page Directory address for task 't' */
 page_table_entry * get_DIR (struct task_struct *t)
@@ -134,3 +135,47 @@ void inner_task_switch(union task_union *t) {
 		: "g" (current_kesp), "g" (new_kesp)
 	);
 }
+
+void schedule() {
+  
+}
+
+int get_quantum (struct task_struct *t) {
+  return t->quantum;
+}
+
+void set_quantum (struct task_struct *t, int new_quantum) {
+  t->quantum = new_quantum;
+}
+void update_sched_data_rr () {
+  quantum_left--;
+}
+
+int needs_sched_rr () {
+  return (current() -> PID == 0 || quantum_left <= 0) && !list_empty(&readyqueue); //si estoy en idle o no queda quantum y hay mas procesos devuelvo un 1
+}
+
+void update_process_state_rr(struct task_struct *t, struct list_head *dest) {
+  if (t->state != ST_RUN) list_del(&t->list);
+  if (dest == NULL) 
+    t->state = ST_RUN;
+  else {
+    list_add_tail(&t->list, dest);
+    if (dest == &readyqueue)
+      t->state = ST_READY;
+    else
+      t->state = ST_BLOCKED;
+  }
+}
+
+void sched_next_rr() {
+  if (!list_empty(&readyqueue)) {
+    task_switch(list_first(&readyqueue));
+  } else 
+    task_switch((union task_union *) &idle_task);
+}
+
+void enqueue_process () {
+  update_process_state_rr(current(), &readyqueue);
+}
+
