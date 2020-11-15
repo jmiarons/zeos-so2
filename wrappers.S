@@ -156,6 +156,7 @@ getpid_ret:
 	popl %ebp;
 	ret;
 
+
 ENTRY(exit)
 	pushl %ebp;
 	movl %esp, %ebp;
