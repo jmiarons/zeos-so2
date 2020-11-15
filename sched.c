@@ -7,10 +7,17 @@
 #include <io.h>
 #include <entry.h>
 
+<<<<<<< HEAD
 #include <utils.h>
 
 #include <stats.h>
 
+=======
+#include <stats.h>
+
+#include <utils.h>
+
+>>>>>>> 355e49114a5bd632d42456ca3f2e6d0e023c9d21
 union task_union task[NR_TASKS]
   __attribute__((__section__(".data.task")));
 
@@ -182,4 +189,14 @@ void sched_next_rr() {
     task_switch((union task_union *) t);
   }
   else task_switch(idle_task);
+}
+
+void update_user_system() {
+  current()->info.user_ticks += get_ticks() - current() -> info.elapsed_total_ticks;
+  current()->info.elapsed_total_ticks = get_ticks();
+}
+
+void update_system_user() {
+  current()->info.system_ticks += get_ticks() - current() -> info.elapsed_total_ticks;
+  current()->info.elapsed_total_ticks = get_ticks();
 }

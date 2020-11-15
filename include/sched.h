@@ -68,4 +68,7 @@ void update_process_state_rr(struct task_struct *t, struct list_head *dest);
 int needs_sched_rr();
 void update_sched_data_rr();
 
+void update_user_system();
+void update_system_user();
+
 #endif  /* __SCHED_H__ */

@@ -22,6 +22,8 @@ int getpid();
 
 int fork();
 
+int get_stats(int pid, struct stats *st);
+
 void perror(void);
 
 void exit();
