@@ -172,5 +172,5 @@ void sched_next_rr() {
     update_process_state_rr(t, NULL);
     task_switch((union task_union *) t);
   } else 
-    task_switch((union task_union *) idle_task);
+    task_switch(idle_task);
 }
