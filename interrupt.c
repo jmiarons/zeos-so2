@@ -122,8 +122,10 @@ void clock_routine() {
 	++zeos_ticks;
 	zeos_show_clock();
   update_sched_data_rr();
-  if(needs_sched_rr()){
-    if(current()->PID) enqueue_current(&readyqueue);
+  if(needs_sched_rr()) {
+    if(current()->PID != 0) {
+      update_process_state_rr(current(), &readyqueue);
+    }
     sched_next_rr();
   }
 }

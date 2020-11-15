@@ -127,8 +127,8 @@ void inner_task_switch(union task_union*t){
 	writeMSR(0x175, (int) KERNEL_ESP(t));
 
 	set_cr3(t -> task.dir_pages_baseAddr);
-  unsigned long current_kesp = current()->kernel_esp;
-  unsigned long new_kesp = t->task.kernel_esp;
+  unsigned long * current_kesp = current()->kernel_esp;
+  unsigned long * new_kesp = t->task.kernel_esp;
   __asm__ __volatile__ (
     "movl %%ebp,%0;"
     "movl %1,%%esp;"
@@ -145,22 +145,17 @@ void update_sched_data_rr(void){
 }
 
 int needs_sched_rr(void){
-	return (quantum_left <= 0 || !current()->PID) &&  (!list_empty(&readyqueue) );
-        //return current()->quantum && !(current()->ticks % current()->quantum) && !list_empty(&readyqueue);
+	return (quantum_left <= 0 || current()->PID == 0) &&  (!list_empty(&readyqueue)); /*Si se ha acabado el quantum o estamos en IDLE y hay + procesos */
 }
 
-void enqueue_current(struct list_head *next_queue){
-	update_process_state_rr(current(), next_queue);
-}
-
-void update_process_state_rr(struct task_struct *t, struct list_head *dst_queue){
-	if( t->state != ST_RUN ) list_del(&t->list);
-	if( dst_queue == NULL ){
+void update_process_state_rr(struct task_struct *t, struct list_head *dest) {
+	if(t->state != ST_RUN ) list_del(&t->list);
+	if(dest == NULL ){
 		t->state = ST_RUN;
-	}else
-	{
-		list_add_tail(&t->list, dst_queue);
-		if( dst_queue == &readyqueue ) {
+	}
+  else {
+		list_add_tail(&t->list, dest);
+		if(dest == &readyqueue ) {
 			t->state = ST_READY;
 		}
 		else{
@@ -169,17 +164,9 @@ void update_process_state_rr(struct task_struct *t, struct list_head *dst_queue)
 	}
 }
 
-void sched_next_rr(void){
-	if (!list_empty(&readyqueue)){
-		struct list_head* next = list_first(&readyqueue);
-		struct task_struct* nextt = list_head_to_task_struct(next);
-
-		quantum_left = nextt->quantum;
-
-		update_process_state_rr(nextt, NULL);
-
-		task_switch((union task_union * ) nextt);
-	}else{
-		task_switch((union task_union * ) idle_task);
-	}
+void sched_next_rr() {
+  if (!list_empty(&readyqueue)) {
+    task_switch(list_first(&readyqueue));
+  }
+  else task_switch((union task_union *) &idle_task);
 }
