@@ -166,7 +166,11 @@ void update_process_state_rr(struct task_struct *t, struct list_head *dest) {
 
 void sched_next_rr() {
   if (!list_empty(&readyqueue)) {
-    task_switch(list_first(&readyqueue));
-  }
-  else task_switch((union task_union *) &idle_task);
+    struct list_head * first = list_first(&readyqueue);
+    struct task_struct * t = list_head_to_task_struct(first);
+    quantum_left = t -> quantum;
+    update_process_state_rr(t, NULL);
+    task_switch((union task_union *) t);
+  } else 
+    task_switch((union task_union *) idle_task);
 }
