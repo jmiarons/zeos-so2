@@ -18,16 +18,17 @@ int __attribute__ ((__section__(".text.main")))
 
      int p1 = fork();
      if (p1 == 0) {
-       while (1) {
+       //while (1) {
          write(1, a, strlen(a));
-       }
+       //}
      }
      else if (p1 > 0) {
-       while (1) {
-         //get_stats(p1, &info); 
-         write(1, b, strlen(b));
-       }
-     }
-
+       write(1, b, strlen(b));
+       //while (1) {
+         get_stats(p1, &info);
+         itoa(info.total_trans, buff);
+         write(1, buff, strlen(buff));
+       //}
+      }
   while(1) { }
 }

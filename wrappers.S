@@ -116,6 +116,16 @@ ENTRY(fork)
 	sysenter;
 
 fork_ret:
+	movl %ebp, %esp;
+	popl %ebp;
+
+	cmpl $0, %eax;
+	jge end_fork;
+	negl %eax;
+	movl %eax, errno;
+	movl $-1, %eax;
+
+end_fork:
 	popl %edi;
 	popl %edi;
 	popl %edx;
@@ -155,7 +165,6 @@ getpid_ret:
 	movl %ebp, %esp;
 	popl %ebp;
 	ret;
-
 
 ENTRY(exit)
 	pushl %ebp;
@@ -199,13 +208,14 @@ ENTRY(get_stats)
 	movl $35, %eax;
 
 	/*Salvamos los regs que machacamos*/
+	pushl %ecx;
+	pushl %edx;
 	pushl %ebx;
 	pushl %edi;
-  pushl %esi;
 
 	/*Paso de parametros*/
 	movl 8(%ebp), %ebx;
-	movl 12(%ebp), %esi;
+	movl 12(%ebp), %ecx;
 
 	/*@ de retorno*/
 	leal dir_ret1, %edi;
@@ -229,9 +239,10 @@ dir_ret1:
 
 end_stats:
 	popl %edi;
-	popl %esi;
 	popl %edi;
 	popl %ebx;
+	popl %edx;
+	popl %ecx;
 	movl %ebp, %esp;
 	popl %ebp;
 	ret;

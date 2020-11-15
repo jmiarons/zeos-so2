@@ -3,11 +3,7 @@
 
 ENTRY (sys_call_table)
 	.long sys_ni_syscall	// 0
-<<<<<<< HEAD
-	.long sys_exit	      // 1
-=======
 	.long sys_exit				// 1
->>>>>>> 355e49114a5bd632d42456ca3f2e6d0e023c9d21
 	.long sys_fork				// 2
 	.long sys_ni_syscall	// 3
 	.long sys_write				// 4
