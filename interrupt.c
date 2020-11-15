@@ -8,7 +8,6 @@
 #include <io.h>
 #include <keyboard.h>
 #include <entry.h>
-#include <sched.h>
 
 #include <zeos_interrupt.h>
 
@@ -20,11 +19,11 @@ Register    idtR;
 char char_map[] =
 {
   '\0','\0','1','2','3','4','5','6',
-  '7','8','9','0','\'','¡','\0','\0',
+  '7','8','9','0','\'','ï¿½','\0','\0',
   'q','w','e','r','t','y','u','i',
   'o','p','`','+','\0','\0','a','s',
-  'd','f','g','h','j','k','l','ñ',
-  '\0','º','\0','ç','z','x','c','v',
+  'd','f','g','h','j','k','l','ï¿½',
+  '\0','ï¿½','\0','ï¿½','z','x','c','v',
   'b','n','m',',','.','-','\0','*',
   '\0','\0','\0','\0','\0','\0','\0','\0',
   '\0','\0','\0','\0','\0','\0','\0','7',
@@ -88,6 +87,10 @@ void setIdt()
   set_handlers();
 	setInterruptHandler(33, keyboard_handler, 0);
 	setInterruptHandler(32, clock_handler, 0);
+  writeMSR(0x174, __KERNEL_CS);
+  writeMSR(0x175, INITIAL_ESP);
+  writeMSR(0x176, (int)syscall_handler_sysenter);
+
 
   /* ADD INITIALIZATION CODE FOR INTERRUPT VECTOR */
 
@@ -102,8 +105,16 @@ void keyboard_routine() {
 	key = char_map[reg & 0x7F];
 	if (!aux) {
 		if (key =='\0') key = 'C';
-        if (key == 'd') task_switch(idle_task);
+    else if (key == 'd') {
+      struct list_head* next = list_first(&readyqueue);
+      struct task_struct* nextt = list_head_to_task_struct(next);
+      task_switch((union task_union * ) nextt);
+    }
+    else if (key == 'h') {
+      task_switch(idle_task);
+    }
 		printc_xy(0,0, key);
+
 	}
 }
 
@@ -111,4 +122,8 @@ void clock_routine() {
 	++zeos_ticks;
 	zeos_show_clock();
   update_sched_data_rr();
+  if(needs_sched_rr()){
+    if(current()->PID) enqueue_current(&readyqueue);
+    sched_next_rr();
+  }
 }

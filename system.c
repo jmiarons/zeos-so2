@@ -82,15 +82,14 @@ int __attribute__((__section__(".text.main")))
   /* Initialize hardware data */
   setGdt(); /* Definicio de la taula de segments de memoria */
   setIdt(); /* Definicio del vector de interrupcions */
-	writeMSR(0x174, __KERNEL_CS);
-	writeMSR(0x175, INITIAL_ESP);
-	writeMSR(0x176, (int)syscall_handler_sysenter);
-
-
+	
   setTSS(); /* Definicio de la TSS */
 
   /* Initialize Memory */
   init_mm();
+
+  /* Initialize an address space to be used for the monoprocess version of ZeOS */
+  monoprocess_init_addr_space(); /* TO BE DELETED WHEN THE PROCESS MANAGEMENT CODE TO BECOME MULTIPROCESS IS ADDED */
 
   /* Initialize Scheduling */
   init_sched();

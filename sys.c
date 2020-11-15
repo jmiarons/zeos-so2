@@ -17,9 +17,6 @@
 
 #include <system.h>
 
-#include <sched.h>
-
-
 #define LECTURA 0
 #define ESCRIPTURA 1
 
@@ -46,7 +43,6 @@ int ret_from_fork() {
 }
 
 int sys_fork() {
-
   int PID = -1;
   /*PCB y tp del proceso padre*/
   struct task_struct* father_task_s = current();
@@ -66,12 +62,12 @@ int sys_fork() {
   copy_data((void *) father_task_u,(void *) task_u, sizeof(union task_union));
 
   /*Asignamos memoria al hijo*/
-  int mem_phys[NUM_PAG_DATA];
+  int frames_assigned[NUM_PAG_DATA];
   int i;
   for (i = 0; i < NUM_PAG_DATA; ++i) {
-    mem_phys[i] = alloc_frame();
-    if (mem_phys[i] == -1) {
-      free(i, mem_phys);
+    frames_assigned[i] = alloc_frame();
+    if (frames_assigned[i] == -1) {
+      free(i, frames_assigned);
       return -ENOMEM;
     }
   }
@@ -84,19 +80,20 @@ int sys_fork() {
   }
 
   for (i = 0; i < NUM_PAG_DATA; ++i) {
-    set_ss_pag(father_pt, PAG_LOG_INIT_DATA+NUM_PAG_DATA, mem_phys[i]);
-    set_ss_pag(pt, PAG_LOG_INIT_DATA + i, mem_phys[i]);
+    set_ss_pag(father_pt, PAG_LOG_INIT_DATA+NUM_PAG_DATA, frames_assigned[i]);
+    set_ss_pag(pt, PAG_LOG_INIT_DATA + i, frames_assigned[i]);
     copy_data((int *)((PAG_LOG_INIT_DATA + i) << 12), (int *) ((PAG_LOG_INIT_DATA + NUM_PAG_DATA) << 12),PAGE_SIZE);
     del_ss_pag(father_pt, PAG_LOG_INIT_DATA + NUM_PAG_DATA);
     set_cr3(get_DIR(father_task_s)); //flush TLB
   }
-  task_u->task.PID = next_PID;
-  PID = next_PID;
-  ++next_PID;
+  task_u->task.PID = next_pid;
+  PID = task_u->task.PID;
+  ++next_pid;
+  task_u->task.state = ST_READY;
 
   task_u->stack[KERNEL_STACK_SIZE-18] = (unsigned long)&ret_from_fork;
   task_u->stack[KERNEL_STACK_SIZE-19] = 0; //fake ebp
-  task_u->task.kernel_esp = task_u->stack[KERNEL_STACK_SIZE - 19];
+  task_u->task.kernel_esp = (unsigned long *) &task_u->stack[KERNEL_STACK_SIZE - 19];
 
   list_add_tail(first, &readyqueue);
   return PID;

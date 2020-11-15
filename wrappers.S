@@ -11,6 +11,8 @@ ENTRY(write)
 	/*Salvamos los regs que machacamos*/
 	pushl %ecx;
 	pushl %edx;
+	pushl %ebx;
+	pushl %edi;
 
 	/*Paso de parametros*/
 	movl 8(%ebp), %ebx;
@@ -39,6 +41,8 @@ dir_ret:
 
 end_write:
 	popl %edi;
+	popl %edi;
+	popl %ebx;
 	popl %edx;
 	popl %ecx;
 	movl %ebp, %esp;
@@ -56,6 +60,7 @@ ENTRY(gettime)
 	/*Salvamos los regs que machacamos*/
 	pushl %ecx;
 	pushl %edx;
+	pushl %edi;
 
 	/*@ de retorno*/
 	leal time_ret, %edi;
@@ -81,35 +86,6 @@ time_ret:
 
 end_time:
 	popl %edi;
-	popl %edx;
-	popl %ecx;
-	movl %ebp, %esp;
-	popl %ebp;
-	ret;
-
-ENTRY(getpid)
-	/*link Dinamico*/
-	pushl %ebp;
-	movl %esp, %ebp;
-
-	/*ID*/
-	movl $20, %eax
-
-	/*Salvamos los regs que machacamos*/
-	pushl %ecx;
-	pushl %edx;
-
-	/*@ de retorno*/
-	leal getpid_ret, %edi;
-	pushl %edi;
-
-	/*Fake dynamic link*/
-	pushl %ebp;
-	movl %esp, %ebp;
-
-	sysenter;
-
-getpid_ret:
 	popl %edi;
 	popl %edx;
 	popl %ecx;
@@ -127,6 +103,7 @@ ENTRY(fork)
 /*Salvamos los regs que machacamos*/
 	pushl %ecx;
 	pushl %edx;
+	pushl %edi;
 
 	/*@ de retorno*/
 	leal fork_ret, %edi;
@@ -139,6 +116,39 @@ ENTRY(fork)
 	sysenter;
 
 fork_ret:
+	popl %edi;
+	popl %edi;
+	popl %edx;
+	popl %ecx;
+	movl %ebp, %esp;
+	popl %ebp;
+	ret;
+
+ENTRY(getpid)
+	/*link Dinamico*/
+	pushl %ebp;
+	movl %esp, %ebp;
+
+	/*ID*/
+	movl $20, %eax
+
+	/*Salvamos los regs que machacamos*/
+	pushl %ecx;
+	pushl %edx;
+	pushl %edi;
+
+	/*@ de retorno*/
+	leal getpid_ret, %edi;
+	pushl %edi;
+
+	/*Fake dynamic link*/
+	pushl %ebp;
+	movl %esp, %ebp;
+
+	sysenter;
+
+getpid_ret:
+	popl %edi;
 	popl %edi;
 	popl %edx;
 	popl %ecx;
