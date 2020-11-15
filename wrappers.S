@@ -187,3 +187,50 @@ ENTRY(exit)
 	movl %ebp, %esp;
 	popl %ebp;
 	ret;
+
+
+ENTRY(get_stats)
+	/*link Dinamico*/
+	pushl %ebp;
+	movl %esp, %ebp;
+
+	/*ID*/
+	movl $35, %eax;
+
+	/*Salvamos los regs que machacamos*/
+	pushl %ebx;
+	pushl %edi;
+  pushl %esi;
+
+	/*Paso de parametros*/
+	movl 8(%ebp), %ebx;
+	movl 12(%ebp), %esi;
+
+	/*@ de retorno*/
+	leal dir_ret1, %edi;
+	pushl %edi;
+
+	/*Fake dynamic link*/
+	pushl %ebp;
+	movl %esp, %ebp;
+
+	sysenter;
+
+dir_ret1:
+	movl %ebp, %esp;
+	popl %ebp;
+
+	cmpl $0, %eax;
+	jge end_stats;
+	negl %eax;
+	movl %eax, errno;
+	movl $-1, %eax;
+
+end_stats:
+	popl %edi;
+	popl %esi;
+	popl %edi;
+	popl %ebx;
+	movl %ebp, %esp;
+	popl %ebp;
+	ret;

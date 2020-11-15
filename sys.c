@@ -20,6 +20,7 @@
 #define LECTURA 0
 #define ESCRIPTURA 1
 
+extern int quantum_left;
 
 int check_fd(int fd, int permissions)
 {
@@ -112,6 +113,21 @@ void sys_exit() {
   update_process_state_rr(t, &freequeue);
   sched_next_rr();
 
+}
+
+int sys_get_stats(int pid, struct stats *st) {
+  if (pid < 0) return -EINVAL;
+  if (!access_ok(VERIFY_WRITE, st, sizeof(struct stats))) return -EFAULT;
+  struct task_struct * t;
+  int i = 0;
+  for (t = &(task[i].task); i < NR_TASKS; t = &(task[i++].task)) {
+    if (t -> PID == pid) {
+      t -> info.remaining_ticks = quantum_left;
+      copy_to_user(&(t -> info), st, sizeof(struct stats));
+      return 0;
+    }
+  }
+  return -ESRCH;
 }
 
 int sys_write(int fd, char * buffer, int size) {

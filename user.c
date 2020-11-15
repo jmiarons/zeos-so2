@@ -1,10 +1,12 @@
 #include <libc.h>
+#include <stats.h>
 
 char buff[24];
 
 char *a = "Hola soy el hijo\n";
 char *b = "Hola soy el padre\n";
 int pid;
+struct stats info;
 
 int addASM(int, int);
 
@@ -22,6 +24,7 @@ int __attribute__ ((__section__(".text.main")))
      }
      else if (p1 > 0) {
        while (1) {
+         //get_stats(p1, &info); 
          write(1, b, strlen(b));
        }
      }
