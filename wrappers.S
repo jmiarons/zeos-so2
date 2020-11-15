@@ -155,3 +155,35 @@ getpid_ret:
 	movl %ebp, %esp;
 	popl %ebp;
 	ret;
+
+ENTRY(exit)
+	pushl %ebp;
+	movl %esp, %ebp;
+
+	pushl %edi;
+
+	/*ID*/
+	movl $1, %eax;
+
+	/*Salvamos los regs que machacamos*/
+	pushl %ecx;
+	pushl %edx;
+
+	/*@ de retorno*/
+	leal exit_ret, %edi;
+	pushl %edi;
+
+	/*Fake dynamic link*/
+	pushl %ebp;
+	movl %esp, %ebp;
+
+	sysenter;
+
+	exit_ret:
+	popl %edi;
+	popl %edx;
+	popl %ecx;
+	popl %edi;
+	movl %ebp, %esp;
+	popl %ebp;
+	ret;

@@ -13,6 +13,10 @@
 
 #include <system.h>
 
+#include <sched.h>
+
+#include <utils.h>
+
 Gate idt[IDT_ENTRIES];
 Register    idtR;
 
@@ -124,6 +128,8 @@ void clock_routine() {
   update_sched_data_rr();
   if(needs_sched_rr()) {
     if(current()->PID != 0) {
+      current()->info.system_ticks += get_ticks() - current()->info.elapsed_total_ticks;
+      current()->info.elapsed_total_ticks = get_ticks();
       update_process_state_rr(current(), &readyqueue);
     }
     sched_next_rr();

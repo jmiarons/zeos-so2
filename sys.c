@@ -99,8 +99,19 @@ int sys_fork() {
   return PID;
 }
 
-void sys_exit()
-{
+void sys_exit() {
+  struct task_struct * t = current();
+  page_table_entry * pgt = get_PT(t);
+
+  for (int i = 0; i < NUM_PAG_DATA; ++i) {
+    free_frame(get_frame(pgt, PAG_LOG_INIT_DATA+i));
+    del_ss_pag(pgt, PAG_LOG_INIT_DATA+i);
+  }
+  t -> PID = -1;
+  set_cr3(get_DIR(t));
+  update_process_state_rr(t, &freequeue);
+  sched_next_rr();
+
 }
 
 int sys_write(int fd, char * buffer, int size) {
