@@ -6,13 +6,10 @@
 #include <segment.h>
 #include <hardware.h>
 #include <io.h>
-#include <keyboard.h>
-#include <entry.h>
-#include <utils.h>
+
+#include <sched.h>
 
 #include <zeos_interrupt.h>
-
-#include <system.h>
 
 Gate idt[IDT_ENTRIES];
 Register    idtR;
@@ -20,11 +17,11 @@ Register    idtR;
 char char_map[] =
 {
   '\0','\0','1','2','3','4','5','6',
-  '7','8','9','0','\'','¡','\0','\0',
+  '7','8','9','0','\'','ï¿½','\0','\0',
   'q','w','e','r','t','y','u','i',
   'o','p','`','+','\0','\0','a','s',
-  'd','f','g','h','j','k','l','ñ',
-  '\0','º','\0','ç','z','x','c','v',
+  'd','f','g','h','j','k','l','ï¿½',
+  '\0','ï¿½','\0','ï¿½','z','x','c','v',
   'b','n','m',',','.','-','\0','*',
   '\0','\0','\0','\0','\0','\0','\0','\0',
   '\0','\0','\0','\0','\0','\0','\0','7',
@@ -33,6 +30,23 @@ char char_map[] =
   '\0','\0','\0','\0','\0','\0','\0','\0',
   '\0','\0'
 };
+
+int zeos_ticks = 0;
+
+void clock_routine()
+{
+  zeos_show_clock();
+  zeos_ticks ++;
+
+  //schedule();
+}
+
+void keyboard_routine()
+{
+  unsigned char c = inb(0x60);
+
+  if (c&0x80) printc_xy(0, 0, char_map[c&0x7f]);
+}
 
 void setInterruptHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
 {
@@ -78,6 +92,19 @@ void setTrapHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
   idt[vector].highOffset      = highWord((DWord)handler);
 }
 
+void clock_handler();
+void keyboard_handler();
+void system_call_handler();
+
+void setMSR(unsigned long msr_number, unsigned long high, unsigned long low);
+
+void setSysenter()
+{
+  setMSR(0x174, 0, __KERNEL_CS);
+  setMSR(0x175, 0, INITIAL_ESP);
+  setMSR(0x176, 0, (unsigned long)system_call_handler);
+}
+
 void setIdt()
 {
   /* Program interrups/exception service routines */
@@ -85,49 +112,12 @@ void setIdt()
   idtR.limit = IDT_ENTRIES * sizeof(Gate) - 1;
 
   set_handlers();
-	setInterruptHandler(33, keyboard_handler, 0);
-	setInterruptHandler(32, clock_handler, 0);
-  writeMSR(0x174, __KERNEL_CS);
-  writeMSR(0x175, INITIAL_ESP);
-  writeMSR(0x176, (int)syscall_handler_sysenter);
-
 
   /* ADD INITIALIZATION CODE FOR INTERRUPT VECTOR */
+  setInterruptHandler(32, clock_handler, 0);
+  setInterruptHandler(33, keyboard_handler, 0);
+
+  setSysenter();
 
   set_idt_reg(&idtR);
-}
-
-
-void keyboard_routine() {
-	unsigned char reg, key;
-	reg = inb(0x60);
-	unsigned int aux = reg & 0x00000080;
-	key = char_map[reg & 0x7F];
-	if (!aux) {
-		if (key =='\0') key = 'C';
-    else if (key == 'd') {
-      struct list_head* next = list_first(&readyqueue);
-      struct task_struct* nextt = list_head_to_task_struct(next);
-      task_switch((union task_union * ) nextt);
-    }
-    else if (key == 'h') {
-      task_switch(idle_task);
-    }
-		printc_xy(0,0, key);
-
-	}
-}
-
-void clock_routine() {
-	++zeos_ticks;
-	zeos_show_clock();
-  update_sched_data_rr();
-  if(needs_sched_rr()) {
-    if(current()->PID != 0) {
-      current()->info.system_ticks += get_ticks() - current()->info.elapsed_total_ticks;
-      current()->info.elapsed_total_ticks = get_ticks();
-      update_process_state_rr(current(), &readyqueue);
-    }
-    sched_next_rr();
-  }
 }

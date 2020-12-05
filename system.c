@@ -1,5 +1,5 @@
 /*
- * system.c -
+ * system.c - 
  */
 
 #include <segment.h>
@@ -11,11 +11,7 @@
 #include <mm.h>
 #include <io.h>
 #include <utils.h>
-#include <zeos_mm.h> /* TO BE DELETED WHEN ADDED THE PROCESS MANAGEMENT CODE TO BECOME MULTIPROCESS */
-
-#include <entry.h>
-
-int zeos_ticks = 0;
+//#include <zeos_mm.h> /* TO BE DELETED WHEN ADDED THE PROCESS MANAGEMENT CODE TO BECOME MULTIPROCESS */
 
 
 int (*usr_main)(void) = (void *) PH_USER_START;
@@ -40,7 +36,7 @@ unsigned int *p_rdtr = (unsigned int *) KERNEL_START+2;
  */
 
 /*
- * This function MUST be 'inline' because it modifies the %esp
+ * This function MUST be 'inline' because it modifies the %esp 
  */
 inline void set_seg_regs(Word data_sel, Word stack_sel, DWord esp)
 {
@@ -72,7 +68,7 @@ int __attribute__((__section__(".text.main")))
   // compiler will know its final memory location. Otherwise it will try to use the
   // 'ds' register to access the address... but we are not ready for that yet
   // (we are still in real mode).
-  set_seg_regs(__KERNEL_DS, __KERNEL_DS, (DWord) &task[4]);
+  set_seg_regs(__KERNEL_DS, __KERNEL_DS, (DWord) &protected_tasks[5]);
 
   /*** DO *NOT* ADD ANY CODE IN THIS ROUTINE BEFORE THIS POINT ***/
 
@@ -82,14 +78,14 @@ int __attribute__((__section__(".text.main")))
   /* Initialize hardware data */
   setGdt(); /* Definicio de la taula de segments de memoria */
   setIdt(); /* Definicio del vector de interrupcions */
-	
   setTSS(); /* Definicio de la TSS */
 
   /* Initialize Memory */
   init_mm();
 
-  /* Initialize an address space to be used for the monoprocess version of ZeOS */
-  monoprocess_init_addr_space(); /* TO BE DELETED WHEN THE PROCESS MANAGEMENT CODE TO BECOME MULTIPROCESS IS ADDED */
+/* Initialize an address space to be used for the monoprocess version of ZeOS */
+
+  //monoprocess_init_addr_space(); /* TO BE DELETED WHEN ADDED THE PROCESS MANAGEMENT CODE TO BECOME MULTIPROCESS */
 
   /* Initialize Scheduling */
   init_sched();
@@ -115,3 +111,5 @@ int __attribute__((__section__(".text.main")))
   /* The execution never arrives to this point */
   return 0;
 }
+
+

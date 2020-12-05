@@ -8,24 +8,24 @@
 
 #include <stats.h>
 
-int errno;
+extern int errno;
 
 int write(int fd, char *buffer, int size);
-
-int gettime();
 
 void itoa(int a, char *b);
 
 int strlen(char *a);
 
+void perror();
+
 int getpid();
 
 int fork();
 
-int get_stats(int pid, struct stats *st);
-
-void perror(void);
-
 void exit();
+
+int yield();
+
+int get_stats(int pid, struct stats *st);
 
 #endif  /* __LIBC_H__ */

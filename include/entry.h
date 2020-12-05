@@ -5,10 +5,4 @@
 #ifndef __ENTRY_H__
 #define __ENTRY_H__
 
-void clock_handler();
-
-void writeMSR(int reg, unsigned long val);
-
-void syscall_handler_sysenter();
-
 #endif  /* __ENTRY_H__ */

@@ -52,52 +52,44 @@
       movl %edx, %ds;           \
       movl %edx, %es
 
-
 #define RESTORE_ALL \
-	popl %ebx; \
-	popl %ecx; \
-  	popl %edx; \
-  	popl %esi; \
-  	popl %edi; \
-  	popl %ebp; \
-	popl %eax; \
-  	popl %ds; \
- 	popl %es; \
-	popl %fs; \
- 	popl %gs;
+      popl %ebx;   \
+      popl %ecx;   \
+      popl %edx;   \
+      popl %esi;   \
+      popl %edi;   \
+      popl %ebp;   \
+      popl %eax;   \
+      popl %ds;    \
+      popl %es;    \
+      popl %fs;    \
+      popl %gs;
 
 #define EOI \
-	movb $0x20, %al; \
-	outb %al, $0x20;
-
-ENTRY(keyboard_handler)
-	SAVE_ALL
-	EOI
-  call update_user_system
-	call keyboard_routine
-  call update_system_user
-	RESTORE_ALL
-	iret
+      movb $0x20, %al; \
+      outb %al, $0x20;
 
 ENTRY(clock_handler)
-	SAVE_ALL
-	EOI
-  call update_user_system
-	call clock_routine
-  call update_system_user
-	RESTORE_ALL
-	iret
+      SAVE_ALL
+      EOI
+      call clock_routine;
+      RESTORE_ALL
+      iret;
 
-ENTRY(syscall_handler_sysenter)
-	pushl $__USER_DS
-	pushl %ebp
+ENTRY(keyboard_handler)
+      SAVE_ALL
+      EOI
+      call keyboard_routine;
+      RESTORE_ALL
+      iret;
+
+ENTRY(system_call_handler)
+	push $__USER_DS
+	push %ebp
 	pushfl
-	pushl $__USER_CS
-	pushl 4(%ebp)
-	SAVE_ALL
-  pushl %eax
-  call update_user_system
-  popl %eax
+	push $__USER_CS
+	push 4(%ebp)
+	SAVE_ALL	// What about arg 6?
 	cmpl $0, %eax
 	jl sysenter_err
 	cmpl $MAX_SYSCALL, %eax
@@ -108,37 +100,8 @@ sysenter_err:
 	movl $-ENOSYS, %eax
 sysenter_fin:
 	movl %eax, 0x18(%esp)
-  call update_system_user
 	RESTORE_ALL
-	movl (%esp), %edx
-	movl 12(%esp), %ecx
+	movl (%esp), %edx // Return address
+	movl 12(%esp), %ecx	      // User stack address
 	sti
 	sysexit
-
-ENTRY(writeMSR)
-	pushl %ebp
-	movl %esp, %ebp
-	movl 8(%ebp), %ecx
-	movl 12(%ebp), %eax
-	movl $0, %edx
-	wrmsr	/*Reg MSR[%ecx] = %eax*/
-	movl %ebp, %esp
-	popl %ebp
-	ret
-
-
-ENTRY(task_switch)
-	pushl %ebp;
-	movl  %esp, %ebp;
-	pushl %esi;
-	pushl %edi;
-	pushl %ebx;
-	pushl 8(%ebp);
-	call inner_task_switch;
-	addl  $4, %esp;
-	popl  %ebx;
-	popl  %edi;
-	popl  %esi;
-	movl  %ebp, %esp;
-	popl  %ebp;
-	ret;
