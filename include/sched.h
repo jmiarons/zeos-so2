@@ -34,7 +34,7 @@ union task_union {
 };
 
 extern union task_union protected_tasks[NR_TASKS+2];
-extern union thread_union thread_tasks[NR_TASKS];
+extern union thread_union thread_tasks[NR_TASKS + 2];
 
 
 extern union task_union *task; /* Vector de tasques */

@@ -20,10 +20,11 @@
 union task_union protected_tasks[NR_TASKS+2]
   __attribute__((__section__(".data.task")));
 
-union thread_union thread_tasks[NR_TASKS]
+union thread_union thread_tasks[NR_TASKS + 2]
   __attribute__((__section__(".data.task")));
 
 union task_union *task = &protected_tasks[1]; /* == union task_union task[NR_TASKS] */
+
 
 
 #if 0
@@ -199,7 +200,7 @@ void init_task1(void) {
   struct list_head *lh_t = list_first(&free_threadqueue);
   list_del(lh_t);
   struct thread_struct *ts = list_head_to_thread_struct(lh_t);
-
+  union thread_union *tu = (union thread_union*)ts;
 
   c->PID=1;
 
@@ -215,10 +216,14 @@ void init_task1(void) {
 
   set_user_pages(c);
 
-  tss.esp0=(DWord)&(uc->stack[KERNEL_STACK_SIZE]);
-  setMSR(0x175, 0, (unsigned long)&(uc->stack[KERNEL_STACK_SIZE]));
+  ts->TID = 8;
+  ts->dir_pages_baseAddr = c->dir_pages_baseAddr;
+  ts->p = c;
 
-  set_cr3(c->dir_pages_baseAddr);
+  tss.esp0=(DWord)&(tu->stack[KERNEL_STACK_SIZE]);
+  setMSR(0x175, 0, (unsigned long)&(tu->stack[KERNEL_STACK_SIZE]));
+
+  set_cr3(ts->dir_pages_baseAddr);
 }
 
 void init_freequeue()

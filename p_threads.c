@@ -12,7 +12,7 @@ pthread_create(struct task_union* t, void *(* start_routine) (void *), void* arg
 
   t->task.register_esp = reg_ebp + sizeof(DWord);
   DWord temp_ebp=*(DWord*)reg_ebp;
-  
+
 
 
 
