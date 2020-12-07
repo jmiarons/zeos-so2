@@ -9,7 +9,6 @@
 #include <types.h>
 #include <mm_address.h>
 #include <stats.h>
-#include <threads.h>
 
 #define NR_TASKS      10
 #define KERNEL_STACK_SIZE	1024
@@ -31,6 +30,22 @@ struct task_struct {
 union task_union {
   struct task_struct task;
   unsigned long stack[KERNEL_STACK_SIZE];    /* pila de sistema, per procés */
+};
+
+struct thread_struct {
+  int TID;
+  page_table_entry * dir_pages_baseAddr;
+  struct task_struct* p;
+  int register_esp;
+  enum state_t state;
+  int quantum;
+  struct list_head list;
+};
+
+
+union thread_union {
+  struct thread_struct task;
+  unsigned long stack[KERNEL_STACK_SIZE];
 };
 
 extern union task_union protected_tasks[NR_TASKS+2];

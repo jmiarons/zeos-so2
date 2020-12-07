@@ -17,8 +17,6 @@
 
 #include <errno.h>
 
-#include <threads.h>
-
 #define LECTURA 0
 #define ESCRIPTURA 1
 

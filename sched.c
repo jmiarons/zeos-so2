@@ -10,7 +10,6 @@
 #include <io.h>
 #include <utils.h>
 #include <p_stats.h>
-#include <threads.h>
 
 
 /**

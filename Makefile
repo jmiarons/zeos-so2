@@ -70,7 +70,7 @@ interrupt.o:interrupt.c $(INCLUDEDIR)/interrupt.h $(INCLUDEDIR)/segment.h $(INCL
 
 io.o:io.c $(INCLUDEDIR)/io.h
 
-sched.o:sched.c  $(INCLUDEDIR)/threads.h $(INCLUDEDIR)/sched.h
+sched.o:sched.c  $(INCLUDEDIR)/sched.h
 
 libc.o:libc.c $(INCLUDEDIR)/libc.h
 
