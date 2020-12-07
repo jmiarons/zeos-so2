@@ -89,11 +89,17 @@ void cpu_idle(void)
 
 #define DEFAULT_QUANTUM 10
 
-int remaining_quantum=0;
+int remaining_quantum_t=0;
+int remaining_quantum_p=0;
 
-int get_quantum(struct task_struct *t)
+int get_quantum_p(struct task_struct *t)
 {
   return t->total_quantum;
+}
+
+int get_quantum_t(struct thread_struct *t)
+{
+  return t->quantum;
 }
 
 void set_quantum(struct task_struct *t, int new_quantum)
@@ -105,13 +111,17 @@ struct task_struct *idle_task=NULL;
 
 void update_sched_data_rr(void)
 {
-  remaining_quantum--;
+  remaining_quantum_t--;
+  remaining_quantum_p--;
 }
 
 int needs_sched_rr(void)
 {
-  if ((remaining_quantum==0)&&(!list_empty(&readyqueue))) return 1;
-  if (remaining_quantum==0) remaining_quantum=get_quantum(current());
+  if ((remaining_quantum_p==0)&&(!list_empty(&readyqueue))) return 1;
+  if ((remaining_quantum_t==0)&&(!list_empty(&(current_p()->ready_threads)))) return 2;
+
+  if (remaining_quantum_p==0) remaining_quantum_p=get_quantum_p(current_p());
+  if (remaining_quantum_t==0) remaining_quantum_t=get_quantum_t(current_t());
   return 0;
 }
 
@@ -131,7 +141,20 @@ void update_process_state_rr(struct task_struct *t, struct list_head *dst_queue)
   else t->state=ST_RUN;
 }
 
-void sched_next_rr(void)
+void update_thread_state_rr(struct thread_struct *t, struct list_head *dst_queue)
+{
+  if (t->state!=ST_RUN) list_del(&(t->list));
+  if (dst_queue!=NULL)
+  {
+    list_add_tail(&(t->list), dst_queue);
+    if (dst_queue!=&(current_p()-> ready_threads)) t->state=ST_BLOCKED;
+    else t->state=ST_READY;
+  }
+  else t->state=ST_RUN;
+}
+
+//TODO
+void sched_next_process_rr(void)
 {
   struct list_head *e;
   struct task_struct *t;
@@ -146,21 +169,28 @@ void sched_next_rr(void)
     t=idle_task;
 
   t->state=ST_RUN;
-  remaining_quantum=get_quantum(t);
+  remaining_quantum_p=get_quantum_p(t);
 
-  update_stats(&(current()->p_stats.system_ticks), &(current()->p_stats.elapsed_total_ticks));
+  update_stats(&(current_p()->p_stats.system_ticks), &(current_p()->p_stats.elapsed_total_ticks));
   update_stats(&(t->p_stats.ready_ticks), &(t->p_stats.elapsed_total_ticks));
   t->p_stats.total_trans++;
 
-  task_switch((union task_union*)t);
+  task_switch((union thread_union*)t);
 }
 
+//TODO
+void sched_next_thread_rr(void)
+{
+
+}
+
+//TODO
 void schedule()
 {
   update_sched_data_rr();
   if (needs_sched_rr())
   {
-    update_process_state_rr(current(), &readyqueue);
+    update_process_state_rr(current_p(), &readyqueue);
     sched_next_rr();
   }
 }
@@ -207,7 +237,7 @@ void init_task1(void) {
 
   c->state=ST_RUN;
 
-  remaining_quantum=c->total_quantum;
+  remaining_quantum_p=c->total_quantum;
 
   //init_stats(&c->p_stats);
 
@@ -255,11 +285,9 @@ void init_sched()
   init_freethreadqueue();
 }
 
-struct task_struct* current()
+struct task_struct* current_p()
 {
-  int ret_value;
-
-  return (struct task_struct*)( ((unsigned int)&ret_value) & 0xfffff000);
+  return current_t() -> p;
 }
 
 struct thread_struct* current_t() {
@@ -278,7 +306,7 @@ struct thread_struct* list_head_to_thread_struct(struct list_head * l) {
 }
 
 /* Do the magic of a task switch */
-void inner_task_switch(union task_union *new)
+void inner_task_switch(union thread_union *new)
 {
   page_table_entry *new_DIR = get_DIR(&new->task);
 
@@ -289,14 +317,14 @@ void inner_task_switch(union task_union *new)
   /* TLB flush. New address space */
   set_cr3(new_DIR);
 
-  switch_stack(&current()->register_esp, new->task.register_esp);
+  switch_stack(&current_t()->register_esp, new->task.register_esp);
 }
 
 
 /* Force a task switch assuming that the scheduler does not work with priorities */
 void force_task_switch()
 {
-  update_process_state_rr(current(), &readyqueue);
+  update_process_state_rr(current_p(), &readyqueue);
 
   sched_next_rr();
 }

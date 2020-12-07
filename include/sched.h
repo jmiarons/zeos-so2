@@ -72,11 +72,11 @@ void init_sched(void);
 
 void schedule(void);
 
-struct task_struct * current();
+struct task_struct * current_p();
 
 struct thread_struct* current_t();
 
-void task_switch(union task_union*t);
+void task_switch(union thread_union*t);
 void switch_stack(int * save_sp, int new_sp);
 
 void sched_next_rr(void);
@@ -93,8 +93,10 @@ page_table_entry * get_PT (struct task_struct *t) ;
 page_table_entry * get_DIR (struct task_struct *t) ;
 
 /* Headers for the scheduling policy */
-void sched_next_rr();
+void sched_next_process_rr();
+void sched_next_thread_rr();
 void update_process_state_rr(struct task_struct *t, struct list_head *dest);
+void update_thread_state_rr(struct thread_struct *t, struct list_head *dst_queue);
 int needs_sched_rr();
 void update_sched_data_rr();
 

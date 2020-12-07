@@ -38,6 +38,7 @@ int sys_ni_syscall()
 int sys_getpid()
 {
 	return current_t()->TID;
+  return current_p()->PID;
 }
 
 int global_PID=1000;
@@ -64,7 +65,7 @@ int sys_fork(void)
   /* Copy the parent's task struct to child's */
 
   /*Current crítico*/
-  copy_data(current(), uchild, sizeof(union task_union));
+  copy_data(current_p(), uchild, sizeof(union task_union));
 
   /* new pages dir */
   allocate_DIR((struct task_struct*)uchild);
@@ -96,7 +97,7 @@ int sys_fork(void)
   }
 
   /* Copy parent's SYSTEM and CODE to child. */
-  page_table_entry *parent_PT = get_PT(current());
+  page_table_entry *parent_PT = get_PT(current_p());
   for (pag=0; pag<NUM_PAG_KERNEL; pag++)
   {
     set_ss_pag(process_PT, pag, get_frame(parent_PT, pag));
@@ -114,7 +115,7 @@ int sys_fork(void)
     del_ss_pag(parent_PT, pag+NUM_PAG_DATA);
   }
   /* Deny access to the child's memory space */
-  set_cr3(get_DIR(current()));
+  set_cr3(get_DIR(current_p()));
 
   uchild->task.PID=++global_PID;
   uchild->task.state=ST_READY;
@@ -122,7 +123,7 @@ int sys_fork(void)
   int register_ebp;		/* frame pointer */
   /* Map Parent's ebp to child's stack */
   register_ebp = (int) get_ebp();
-  register_ebp=(register_ebp - (int)current()) + (int)(uchild);
+  register_ebp=(register_ebp - (int)current_p()) + (int)(uchild);
 
   uchild->task.register_esp=register_ebp + sizeof(DWord);
 
@@ -184,7 +185,7 @@ void sys_exit()
 {
   int i;
 
-  page_table_entry *process_PT = get_PT(current());
+  page_table_entry *process_PT = get_PT(current_p());
 
   // Deallocate all the propietary physical pages
   for (i=0; i<NUM_PAG_DATA; i++)
@@ -194,9 +195,9 @@ void sys_exit()
   }
 
   /* Free task_struct */
-  list_add_tail(&(current()->list), &freequeue);
+  list_add_tail(&(current_p()->list), &freequeue);
 
-  current()->PID=-1;
+  current_p()->PID=-1;
 
   /* Restarts execution of the next process */
   sched_next_rr();
