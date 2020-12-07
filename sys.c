@@ -17,6 +17,8 @@
 
 #include <errno.h>
 
+#include <threads.h>
+
 #define LECTURA 0
 #define ESCRIPTURA 1
 
@@ -29,15 +31,6 @@ int check_fd(int fd, int permissions)
   return 0;
 }
 
-void user_to_system(void)
-{
-  update_stats(&(current()->p_stats.user_ticks), &(current()->p_stats.elapsed_total_ticks));
-}
-
-void system_to_user(void)
-{
-  update_stats(&(current()->p_stats.system_ticks), &(current()->p_stats.elapsed_total_ticks));
-}
 
 int sys_ni_syscall()
 {
@@ -46,7 +39,7 @@ int sys_ni_syscall()
 
 int sys_getpid()
 {
-	return current()->PID;
+	return current_t()->TID;
 }
 
 int global_PID=1000;
@@ -71,6 +64,8 @@ int sys_fork(void)
   uchild=(union task_union*)list_head_to_task_struct(lhcurrent);
 
   /* Copy the parent's task struct to child's */
+
+  /*Current crítico*/
   copy_data(current(), uchild, sizeof(union task_union));
 
   /* new pages dir */
@@ -217,22 +212,3 @@ int sys_yield()
 }
 
 extern int remaining_quantum;
-
-int sys_get_stats(int pid, struct stats *st)
-{
-  int i;
-
-  if (!access_ok(VERIFY_WRITE, st, sizeof(struct stats))) return -EFAULT;
-
-  if (pid<0) return -EINVAL;
-  for (i=0; i<NR_TASKS; i++)
-  {
-    if (task[i].task.PID==pid)
-    {
-      task[i].task.p_stats.remaining_ticks=remaining_quantum;
-      copy_to_user(&(task[i].task.p_stats), st, sizeof(struct stats));
-      return 0;
-    }
-  }
-  return -ESRCH; /*ESRCH */
-}

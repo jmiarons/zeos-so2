@@ -20,9 +20,10 @@
 union task_union protected_tasks[NR_TASKS+2]
   __attribute__((__section__(".data.task")));
 
-union task_union *task = &protected_tasks[1]; /* == union task_union task[NR_TASKS] */
+union thread_union thread_tasks[NR_TASKS]
+  __attribute__((__section__(".data.task")));
 
-union thread_union t1;
+union task_union *task = &protected_tasks[1]; /* == union task_union task[NR_TASKS] */
 
 
 #if 0
@@ -38,6 +39,8 @@ extern struct list_head blocked;
 struct list_head freequeue;
 // Ready queue
 struct list_head readyqueue;
+
+struct list_head free_threadqueue;
 
 void init_stats(struct stats *s)
 {
@@ -193,6 +196,11 @@ void init_task1(void) {
   struct task_struct *c = list_head_to_task_struct(l);
   union task_union *uc = (union task_union*)c;
 
+  struct list_head *lh_t = list_first(&free_threadqueue);
+  list_del(lh_t);
+  struct thread_struct *ts = list_head_to_thread_struct(lh_t);
+
+
   c->PID=1;
 
   c->total_quantum=DEFAULT_QUANTUM;
@@ -207,16 +215,10 @@ void init_task1(void) {
 
   set_user_pages(c);
 
-  t1.task.TID = 8;
-  t1.task.dir_pages_baseAddr = c->dir_pages_baseAddr;
-  t1.task.p = c;
-  t1.task.state = ST_RUN;
+  tss.esp0=(DWord)&(uc->stack[KERNEL_STACK_SIZE]);
+  setMSR(0x175, 0, (unsigned long)&(uc->stack[KERNEL_STACK_SIZE]));
 
-
-  tss.esp0=(DWord)&(t1.stack[KERNEL_STACK_SIZE]);
-  setMSR(0x175, 0, (unsigned long)&(t1.stack[KERNEL_STACK_SIZE]));
-
-  set_cr3(t1.task.dir_pages_baseAddr);
+  set_cr3(c->dir_pages_baseAddr);
 }
 
 void init_freequeue()
@@ -233,10 +235,20 @@ void init_freequeue()
   }
 }
 
+void init_freethreadqueue() {
+  INIT_LIST_HEAD(&free_threadqueue);
+
+  for (int i = 0; i < NR_TASKS; i++) {
+    thread_tasks[i].task.TID = -1;
+    list_add_tail(&(thread_tasks[i].task.list),&free_threadqueue);
+  }
+}
+
 void init_sched()
 {
   init_freequeue();
   INIT_LIST_HEAD(&readyqueue);
+  init_freethreadqueue();
 }
 
 struct task_struct* current()
@@ -246,9 +258,19 @@ struct task_struct* current()
   return (struct task_struct*)( ((unsigned int)&ret_value) & 0xfffff000);
 }
 
+struct thread_struct* current_t() {
+  int ret_value;
+  return (struct thread_struct*)( ((unsigned int)&ret_value) & 0xfffff000);
+}
+
+
 struct task_struct* list_head_to_task_struct(struct list_head *l)
 {
   return (struct task_struct*)((int)l&0xfffff000);
+}
+
+struct thread_struct* list_head_to_thread_struct(struct list_head * l) {
+    return (struct thread_struct*)((int)l&0xfffff000);
 }
 
 /* Do the magic of a task switch */

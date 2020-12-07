@@ -9,7 +9,7 @@
 #include <types.h>
 #include <mm_address.h>
 #include <stats.h>
-
+#include <threads.h>
 
 #define NR_TASKS      10
 #define KERNEL_STACK_SIZE	1024
@@ -34,6 +34,9 @@ union task_union {
 };
 
 extern union task_union protected_tasks[NR_TASKS+2];
+extern union thread_union thread_tasks[NR_TASKS];
+
+
 extern union task_union *task; /* Vector de tasques */
 extern struct task_struct *idle_task;
 
@@ -56,6 +59,8 @@ void schedule(void);
 
 struct task_struct * current();
 
+struct thread_struct* current_t();
+
 void task_switch(union task_union*t);
 void switch_stack(int * save_sp, int new_sp);
 
@@ -64,6 +69,7 @@ void sched_next_rr(void);
 void force_task_switch(void);
 
 struct task_struct *list_head_to_task_struct(struct list_head *l);
+struct thread_struct* list_head_to_thread_struct(struct list_head * l);
 
 int allocate_DIR(struct task_struct *t);
 

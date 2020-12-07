@@ -26,7 +26,7 @@ ENTRY(write)
 	call syscall_sysenter
 	popl %ebx
 	test %eax, %eax
-	js nok	// if (eax < 0) -> 
+	js nok	// if (eax < 0) ->
 	popl %ebp
 	ret
 
@@ -99,4 +99,3 @@ ENTRY(get_stats)
 	js nok	// if (eax < 0) -->
 	popl %ebp
 	ret
-

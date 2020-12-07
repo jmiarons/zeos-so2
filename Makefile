@@ -66,11 +66,11 @@ sys_call_table.s: sys_call_table.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
 
 user.o:user.c $(INCLUDEDIR)/libc.h
 
-interrupt.o:interrupt.c $(INCLUDEDIR)/interrupt.h $(INCLUDEDIR)/segment.h $(INCLUDEDIR)/types.h
+interrupt.o:interrupt.c $(INCLUDEDIR)/interrupt.h $(INCLUDEDIR)/segment.h $(INCLUDEDIR)/types.h $(INCLUDEDIR)/sched.h
 
 io.o:io.c $(INCLUDEDIR)/io.h
 
-sched.o:sched.c $(INCLUDEDIR)/sched.h
+sched.o:sched.c  $(INCLUDEDIR)/threads.h $(INCLUDEDIR)/sched.h
 
 libc.o:libc.c $(INCLUDEDIR)/libc.h
 
@@ -82,18 +82,18 @@ utils.o:utils.c $(INCLUDEDIR)/utils.h
 
 p_stats.o:p_stats.c $(INCLUDEDIR)/utils.h
 
-system.o:system.c $(INCLUDEDIR)/hardware.h system.lds $(SYSOBJ) $(INCLUDEDIR)/segment.h $(INCLUDEDIR)/types.h $(INCLUDEDIR)/interrupt.h $(INCLUDEDIR)/system.h $(INCLUDEDIR)/sched.h $(INCLUDEDIR)/mm.h $(INCLUDEDIR)/io.h $(INCLUDEDIR)/mm_address.h 
+system.o:system.c $(INCLUDEDIR)/hardware.h system.lds $(SYSOBJ) $(INCLUDEDIR)/segment.h $(INCLUDEDIR)/types.h $(INCLUDEDIR)/interrupt.h $(INCLUDEDIR)/system.h $(INCLUDEDIR)/sched.h $(INCLUDEDIR)/mm.h $(INCLUDEDIR)/io.h $(INCLUDEDIR)/mm_address.h
 
 
 system: system.o system.lds $(SYSOBJ)
-	$(LD) $(LINKFLAGS) $(SYSLDFLAGS) -o $@ $< $(SYSOBJ) $(LIBZEOS) 
+	$(LD) $(LINKFLAGS) $(SYSLDFLAGS) -o $@ $< $(SYSOBJ) $(LIBZEOS)
 
-user: user.o user.lds $(USROBJ) 
+user: user.o user.lds $(USROBJ)
 	$(LD) $(LINKFLAGS) $(USRLDFLAGS) -o $@ $< $(USROBJ)
 
 
 clean:
-	rm -f *.o *.s bochsout.txt parport.out system.out system bootsect zeos.bin user user.out *~ build 
+	rm -f *.o *.s bochsout.txt parport.out system.out system bootsect zeos.bin user user.out *~ build
 
 disk: zeos.bin
 	dd if=zeos.bin of=/dev/fd0
