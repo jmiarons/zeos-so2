@@ -200,7 +200,7 @@ void sys_exit()
   current_p()->PID=-1;
 
   /* Restarts execution of the next process */
-  sched_next_rr();
+  sched_next_process_rr();
 }
 
 /* System call to force a task switch */

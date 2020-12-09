@@ -153,45 +153,65 @@ void update_thread_state_rr(struct thread_struct *t, struct list_head *dst_queue
   else t->state=ST_RUN;
 }
 
-//TODO
 void sched_next_process_rr(void)
 {
   struct list_head *e;
-  struct task_struct *t;
+  struct list_head *a;
+  struct task_struct *p;
+  struct thread_struct *t;
 
   if (!list_empty(&readyqueue)) {
 	e = list_first(&readyqueue);
     list_del(e);
 
     t=list_head_to_task_struct(e);
+    //no creo que haga falta comprovar que un proceso tenga un thread en la readyqueue ya que por defecto siempre tiene
+    a = list_first(&(p->ready_threads));
+    t = list_head_to_thread_struct(a);
+    list_del(a);
   }
   else
     t=idle_task;
 
+  p->state=ST_RUN;
   t->state=ST_RUN;
-  remaining_quantum_p=get_quantum_p(t);
-
-  update_stats(&(current_p()->p_stats.system_ticks), &(current_p()->p_stats.elapsed_total_ticks));
-  update_stats(&(t->p_stats.ready_ticks), &(t->p_stats.elapsed_total_ticks));
-  t->p_stats.total_trans++;
+  remaining_quantum_p=get_quantum_p(p);
+  remaining_quantum_t=get_quantum_t(t);
 
   task_switch((union thread_union*)t);
 }
 
-//TODO
 void sched_next_thread_rr(void)
 {
+  struct list_head *e;
+  struct thread_struct *t;
 
+  struct task_struct *p = current_p();
+
+  e = list_first(&(p->ready_threads));
+  t = list_head_to_thread_struct(e);
+  list_del(e);
+
+  t->state=ST_RUN;
+  t->state=ST_RUN;
+  remaining_quantum_t=get_quantum_t(t);
+
+  task_switch((union thread_union*)t);
 }
 
-//TODO
 void schedule()
 {
   update_sched_data_rr();
-  if (needs_sched_rr())
+  int scheduler = needs_sched_rr();
+  if (scheduler == 1)
   {
     update_process_state_rr(current_p(), &readyqueue);
-    sched_next_rr();
+    sched_next_process_rr();
+  }
+  else if (scheduler == 2)
+  {
+    update_thread_state_rr(current_t(), &(current_p()->ready_threads));
+    sched_next_thread_rr();
   }
 }
 
@@ -326,5 +346,5 @@ void force_task_switch()
 {
   update_process_state_rr(current_p(), &readyqueue);
 
-  sched_next_rr();
+  sched_next_process_rr();
 }
