@@ -251,9 +251,12 @@ int sys_pthread_exit(void *value_ptr) {
   {
     del_ss_pag(thread_PT, PAG_LOG_INIT_DATA+i);
   }
+
   list_add_tail(&(current_t()->list), &free_threadqueue);
 
   current_t() -> TID = -1;
+
+  current_t() -> p = NULL;
 
   sched_next_thread_rr();
 
