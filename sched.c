@@ -118,9 +118,9 @@ void update_sched_data_rr(void)
 int needs_sched_rr(void)
 {
   if ((remaining_quantum_p==0)&&(!list_empty(&readyqueue))) return 1;
-  if ((remaining_quantum_t==0)&&(!list_empty(&(current()->ready_threads)))) return 2;
+  if ((remaining_quantum_t==0)&&(!list_empty(&(current_p()->ready_threads)))) return 2;
 
-  if (remaining_quantum_p==0) remaining_quantum_p=get_quantum_p(current());
+  if (remaining_quantum_p==0) remaining_quantum_p=get_quantum_p(current_p());
   if (remaining_quantum_t==0) remaining_quantum_t=get_quantum_t(current_t());
   return 0;
 }
@@ -147,7 +147,7 @@ void update_thread_state_rr(struct thread_struct *t, struct list_head *dst_queue
   if (dst_queue!=NULL)
   {
     list_add_tail(&(t->list), dst_queue);
-    if (dst_queue!=&(current()-> ready_threads)) t->state=ST_BLOCKED;
+    if (dst_queue!=&(current_p()-> ready_threads)) t->state=ST_BLOCKED;
     else t->state=ST_READY;
   }
   else t->state=ST_RUN;
@@ -187,7 +187,7 @@ void sched_next_thread_rr(void)
   struct list_head *e;
   struct thread_struct *t;
 
-  struct task_struct *p = current();
+  struct task_struct *p = current_p();
 
   e = list_first(&(p->ready_threads));
   t = list_head_to_thread_struct(e);
@@ -206,15 +206,15 @@ void schedule()
   int scheduler = needs_sched_rr();
   if (scheduler == 1)
   {
-    update_process_state_rr(current(), &readyqueue);
+    update_process_state_rr(current_p(), &readyqueue);
     
-    update_thread_state_rr(current_t(), &(current()->ready_threads));
+    update_thread_state_rr(current_t(), &(current_p()->ready_threads));
 
     sched_next_process_rr();
   }
   else if (scheduler == 2)
   {
-    update_thread_state_rr(current_t(), &(current()->ready_threads));
+    update_thread_state_rr(current_t(), &(current_p()->ready_threads));
     sched_next_thread_rr();
   }
 }
@@ -318,7 +318,7 @@ void init_sched()
   init_freethreadqueue();
 }
 
-struct task_struct* current() {
+struct task_struct* current_p() {
   return (struct task_struct*)(current_t()->p);
 }
 
@@ -356,7 +356,7 @@ void inner_task_switch(union thread_union *new)
 /* Force a task switch assuming that the scheduler does not work with priorities */
 void force_task_switch()
 {
-  update_process_state_rr(current(), &readyqueue);
+  update_process_state_rr(current_p(), &readyqueue);
 
   sched_next_process_rr();
 }

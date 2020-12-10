@@ -8,7 +8,7 @@ ENTRY(switch_stack)
 	popl %ebp
 	ret
 
-/* void task_switch(union task_union *new) */
+/* void task_switch(union thread_union *new) */
 ENTRY(task_switch)
 	pushl %ebp
 	movl %esp, %ebp

@@ -79,7 +79,7 @@ void init_sched(void);
 
 void schedule(void);
 
-struct task_struct * current();
+struct task_struct * current_p();
 
 struct thread_struct* current_t();
 

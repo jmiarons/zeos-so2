@@ -104,7 +104,7 @@ int sys_fork(void)
   }
 
   /* Copy parent's SYSTEM and CODE to child. */
-  page_table_entry *parent_PT = get_PT(current());
+  page_table_entry *parent_PT = get_PT(current_p());
   for (pag=0; pag<NUM_PAG_KERNEL; pag++)
   {
     set_ss_pag(process_PT, pag, get_frame(parent_PT, pag));
@@ -122,7 +122,7 @@ int sys_fork(void)
     del_ss_pag(parent_PT, pag+NUM_PAG_DATA);
   }
   /* Deny access to the child's memory space */
-  set_cr3(get_DIR(current()));
+  set_cr3(get_DIR(current_p()));
 
 
   uchild->task.PID=++global_PID;
@@ -206,7 +206,7 @@ void sys_exit()
 {
   int i;
 
-  page_table_entry *process_PT = get_PT(current());
+  page_table_entry *process_PT = get_PT(current_p());
 
   // Deallocate all the propietary physical pages
   for (i=0; i<NUM_PAG_DATA; i++)
@@ -216,9 +216,9 @@ void sys_exit()
   }
 
   /* Free task_struct */
-  list_add_tail(&(current()->list), &freequeue);
+  list_add_tail(&(current_p()->list), &freequeue);
 
-  current()->PID=-1;
+  current_p()->PID=-1;
 
   /* Restarts execution of the next process */
   sched_next_process_rr();
