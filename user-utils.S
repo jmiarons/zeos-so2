@@ -85,14 +85,28 @@ ENTRY(yield)
 	popl %ebp
 	ret
 
-/* int get_stats(int pid, struct stats *st) */
-ENTRY(get_stats)
+/* int pthread_join(struct thread_struct *thread, void **value_ptr) */
+ENTRY(pthread_join)
 	pushl %ebp
 	movl %esp, %ebp
 	pushl %ebx;  // Save EBX, ESI and EDI if modified
-	movl $35, %eax
+	movl $25, %eax //TODO actualizarlo para que esten correlativos todos los de threads
 	movl 0x8(%ebp), %ebx;	//pid
 	movl 0xC(%ebp), %ecx;	//st
+	call syscall_sysenter
+	popl %ebx
+	test %eax, %eax
+	js nok	// if (eax < 0) -->
+	popl %ebp
+	ret
+
+/* int pthread_exit(void *value_ptr) */
+ENTRY(pthread_exit)
+	pushl %ebp
+	movl %esp, %ebp
+	pushl %ebx;  // Save EBX, ESI and EDI if modified
+	movl $25, %eax //TODO actualizarlo para que esten correlativos todos los de threads
+	movl 0x8(%ebp), %ebx;	//pid
 	call syscall_sysenter
 	popl %ebx
 	test %eax, %eax

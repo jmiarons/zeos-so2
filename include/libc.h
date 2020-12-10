@@ -7,6 +7,7 @@
 #define __LIBC_H__
 
 #include <stats.h>
+#include <sched.h>
 
 extern int errno;
 
@@ -26,6 +27,8 @@ void exit();
 
 int yield();
 
-int get_stats(int pid, struct stats *st);
+int pthread_join(struct thread_struct *thread, void **value_ptr);
+
+int pthread_exit(void *value_ptr); 
 
 #endif  /* __LIBC_H__ */

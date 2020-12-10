@@ -23,12 +23,11 @@ struct task_struct {
   int PID;			/* Process ID. This MUST be the first field of the struct. */
   page_table_entry * dir_pages_baseAddr;
   struct list_head list;	/* Task struct enqueuing */
-  int register_esp;		/* position in the stack */ /*Quitarlo del padre y ponerlo a los threads*/
   enum state_t state;		/* State of the process */
   int total_quantum;		/* Total quantum of the process */
-  struct stats p_stats;		/* Process stats */
   struct list_head ready_threads;
   struct list_head blocked_threads;
+  unsigned int nthread;
 };
 
 union task_union {
@@ -46,6 +45,7 @@ struct thread_struct {
   enum state_t state;
   int quantum;
   struct list_head list;
+  unsigned int blocked_by;
 };
 
 
@@ -96,6 +96,7 @@ struct thread_struct* list_head_to_thread_struct(struct list_head * l);
 int allocate_DIR(struct task_struct *t);
 
 page_table_entry * get_PT (struct task_struct *t) ;
+page_table_entry * get_PT_thread (struct thread_struct *t) ;
 
 page_table_entry * get_DIR (struct task_struct *t) ;
 
@@ -103,6 +104,7 @@ page_table_entry * get_DIR (struct task_struct *t) ;
 void sched_next_process_rr();
 void sched_next_thread_rr();
 void update_process_state_rr(struct task_struct *t, struct list_head *dest);
+void update_thread_state_rr(struct thread_struct *t, struct list_head *dest);
 int needs_sched_rr();
 void update_sched_data_rr();
 

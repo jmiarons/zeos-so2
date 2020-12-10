@@ -231,4 +231,33 @@ int sys_yield()
   return 0;
 }
 
-extern int remaining_quantum;
+int sys_pthread_join(struct thread_struct *thread, void **value_ptr) 
+{
+  //recorrer vector de threads buscando si existe
+  if (current_p()->nthread < 2) return -1; //TODO buscar el error que toca
+  current_t()->blocked_by = thread->TID;
+  update_thread_state_rr(current_t(), &(current_p()->blocked_threads));
+  sched_next_thread_rr();
+  //descubrir que hace value_ptr
+  return 0;
+}
+
+int sys_pthread_exit(void *value_ptr) {
+  int i;
+
+  page_table_entry *thread_PT = get_PT_thread(current_t());
+
+  for (i=0; i<NUM_PAG_DATA; ++i)
+  {
+    del_ss_pag(thread_PT, PAG_LOG_INIT_DATA+i);
+  }
+  list_add_tail(&(current_t()->list), &free_threadqueue);
+
+  current_t() -> TID = -1;
+
+  sched_next_thread_rr();
+
+  //TODO Usar value_ptr o hacer una funcion para controlar los blockeds que se han hecho con el join
+
+  return 0;
+}
