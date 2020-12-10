@@ -37,8 +37,7 @@ int sys_ni_syscall()
 
 int sys_getpid()
 {
-	return current_t()->TID;
-  return current_p()->PID;
+	return current_t()->p->PID;
 }
 
 int global_PID=1000;
@@ -53,19 +52,27 @@ int sys_fork(void)
   struct list_head *lhcurrent = NULL;
   union task_union *uchild;
 
+  struct list_head *t_lh;
+  union thread_union *uthread;
+
   /* Any free task_struct? */
   if (list_empty(&freequeue)) return -ENOMEM;
+  if (list_empty(&free_threadqueue)) return -ENOMEM;
 
   lhcurrent=list_first(&freequeue);
+  t_lh = list_first(&free_threadqueue);
 
   list_del(lhcurrent);
+  list_del(t_lh);
 
   uchild=(union task_union*)list_head_to_task_struct(lhcurrent);
+  uthread=(union thread_union*)list_head_to_thread_struct(t_lh);
+
 
   /* Copy the parent's task struct to child's */
 
   /*Current crítico*/
-  copy_data(current_p(), uchild, sizeof(union task_union));
+  copy_data(current_t(), uthread, sizeof(union thread_union));
 
   /* new pages dir */
   allocate_DIR((struct task_struct*)uchild);
@@ -97,7 +104,7 @@ int sys_fork(void)
   }
 
   /* Copy parent's SYSTEM and CODE to child. */
-  page_table_entry *parent_PT = get_PT(current_p());
+  page_table_entry *parent_PT = get_PT(current());
   for (pag=0; pag<NUM_PAG_KERNEL; pag++)
   {
     set_ss_pag(process_PT, pag, get_frame(parent_PT, pag));
@@ -115,31 +122,45 @@ int sys_fork(void)
     del_ss_pag(parent_PT, pag+NUM_PAG_DATA);
   }
   /* Deny access to the child's memory space */
-  set_cr3(get_DIR(current_p()));
+  set_cr3(get_DIR(current()));
+
 
   uchild->task.PID=++global_PID;
   uchild->task.state=ST_READY;
+  uchild->task.total_quantum = DEFAULT_QUANTUM_P;
+
+  uthread->task.TID = 1;
+  uthread->task.state = ST_READY;
+  uthread->task.dir_pages_baseAddr = get_DIR((struct task_struct*)uchild);
+  uthread->task.p = (struct task_struct*)uchild;
+
+  //printk("Llego hasta la assignacion de mem\n");
 
   int register_ebp;		/* frame pointer */
   /* Map Parent's ebp to child's stack */
   register_ebp = (int) get_ebp();
-  register_ebp=(register_ebp - (int)current_p()) + (int)(uchild);
+  register_ebp=(register_ebp - (int)current_t()) + (int)(uthread);//Al 99 % seguro de que es thread ya que es aritmetica de pila
 
-  uchild->task.register_esp=register_ebp + sizeof(DWord);
+  uthread->task.register_esp=register_ebp + sizeof(DWord);
 
   DWord temp_ebp=*(DWord*)register_ebp;
   /* Prepare child stack for context switch */
-  uchild->task.register_esp-=sizeof(DWord);
-  *(DWord*)(uchild->task.register_esp)=(DWord)&ret_from_fork;
-  uchild->task.register_esp-=sizeof(DWord);
-  *(DWord*)(uchild->task.register_esp)=temp_ebp;
+  uthread->task.register_esp-=sizeof(DWord);
+  *(DWord*)(uthread->task.register_esp)=(DWord)&ret_from_fork;
+  uthread->task.register_esp-=sizeof(DWord);
+  *(DWord*)(uthread->task.register_esp)=temp_ebp;
+
+  //printk("Llego hasta el manejo de la pila\n");
 
   /* Set stats to 0 */
-  init_stats(&(uchild->task.p_stats));
+  //init_stats(&(uchild->task.p_stats));
 
   /* Queue child process into readyqueue */
   uchild->task.state=ST_READY;
   list_add_tail(&(uchild->task.list), &readyqueue);
+  list_add_tail(&(uthread->task.list), &(uchild->task.ready_threads));
+
+  //printk("Llego hasta el final\n");
 
   return uchild->task.PID;
 }
@@ -185,7 +206,7 @@ void sys_exit()
 {
   int i;
 
-  page_table_entry *process_PT = get_PT(current_p());
+  page_table_entry *process_PT = get_PT(current());
 
   // Deallocate all the propietary physical pages
   for (i=0; i<NUM_PAG_DATA; i++)
@@ -195,9 +216,9 @@ void sys_exit()
   }
 
   /* Free task_struct */
-  list_add_tail(&(current_p()->list), &freequeue);
+  list_add_tail(&(current()->list), &freequeue);
 
-  current_p()->PID=-1;
+  current()->PID=-1;
 
   /* Restarts execution of the next process */
   sched_next_process_rr();

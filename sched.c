@@ -79,7 +79,8 @@ int allocate_DIR(struct task_struct *t)
 
 void cpu_idle(void)
 {
-	__asm__ __volatile__("sti": : :"memory");
+    printk("IDLE\n");
+    __asm__ __volatile__("sti": : :"memory");
 
 	while(1)
 	{
@@ -87,7 +88,6 @@ void cpu_idle(void)
 	}
 }
 
-#define DEFAULT_QUANTUM 10
 
 int remaining_quantum_t=0;
 int remaining_quantum_p=0;
@@ -107,7 +107,7 @@ void set_quantum(struct task_struct *t, int new_quantum)
   t->total_quantum=new_quantum;
 }
 
-struct task_struct *idle_task=NULL;
+struct thread_struct *idle_task=NULL;
 
 void update_sched_data_rr(void)
 {
@@ -118,12 +118,13 @@ void update_sched_data_rr(void)
 int needs_sched_rr(void)
 {
   if ((remaining_quantum_p==0)&&(!list_empty(&readyqueue))) return 1;
-  if ((remaining_quantum_t==0)&&(!list_empty(&(current_p()->ready_threads)))) return 2;
+  if ((remaining_quantum_t==0)&&(!list_empty(&(current()->ready_threads)))) return 2;
 
-  if (remaining_quantum_p==0) remaining_quantum_p=get_quantum_p(current_p());
+  if (remaining_quantum_p==0) remaining_quantum_p=get_quantum_p(current());
   if (remaining_quantum_t==0) remaining_quantum_t=get_quantum_t(current_t());
   return 0;
 }
+
 
 void update_process_state_rr(struct task_struct *t, struct list_head *dst_queue)
 {
@@ -134,7 +135,6 @@ void update_process_state_rr(struct task_struct *t, struct list_head *dst_queue)
     if (dst_queue!=&readyqueue) t->state=ST_BLOCKED;
     else
     {
-      update_stats(&(t->p_stats.system_ticks), &(t->p_stats.elapsed_total_ticks));
       t->state=ST_READY;
     }
   }
@@ -147,7 +147,7 @@ void update_thread_state_rr(struct thread_struct *t, struct list_head *dst_queue
   if (dst_queue!=NULL)
   {
     list_add_tail(&(t->list), dst_queue);
-    if (dst_queue!=&(current_p()-> ready_threads)) t->state=ST_BLOCKED;
+    if (dst_queue!=&(current()-> ready_threads)) t->state=ST_BLOCKED;
     else t->state=ST_READY;
   }
   else t->state=ST_RUN;
@@ -161,32 +161,33 @@ void sched_next_process_rr(void)
   struct thread_struct *t;
 
   if (!list_empty(&readyqueue)) {
-	e = list_first(&readyqueue);
+    e = list_first(&readyqueue);
     list_del(e);
 
-    t=list_head_to_task_struct(e);
-    //no creo que haga falta comprovar que un proceso tenga un thread en la readyqueue ya que por defecto siempre tiene
+    p=list_head_to_task_struct(e);
+     //no creo que haga falta comprovar que un proceso tenga un thread en la readyqueue ya que por defecto siempre tiene
     a = list_first(&(p->ready_threads));
     t = list_head_to_thread_struct(a);
     list_del(a);
-  }
-  else
+    p->state=ST_RUN;
+    remaining_quantum_p=get_quantum_p(p);
+   }
+   else
     t=idle_task;
 
-  p->state=ST_RUN;
   t->state=ST_RUN;
-  remaining_quantum_p=get_quantum_p(p);
   remaining_quantum_t=get_quantum_t(t);
 
   task_switch((union thread_union*)t);
 }
+
 
 void sched_next_thread_rr(void)
 {
   struct list_head *e;
   struct thread_struct *t;
 
-  struct task_struct *p = current_p();
+  struct task_struct *p = current();
 
   e = list_first(&(p->ready_threads));
   t = list_head_to_thread_struct(e);
@@ -205,12 +206,15 @@ void schedule()
   int scheduler = needs_sched_rr();
   if (scheduler == 1)
   {
-    update_process_state_rr(current_p(), &readyqueue);
+    update_process_state_rr(current(), &readyqueue);
+    
+    update_thread_state_rr(current_t(), &(current()->ready_threads));
+
     sched_next_process_rr();
   }
   else if (scheduler == 2)
   {
-    update_thread_state_rr(current_t(), &(current_p()->ready_threads));
+    update_thread_state_rr(current_t(), &(current()->ready_threads));
     sched_next_thread_rr();
   }
 }
@@ -222,20 +226,26 @@ void init_idle (void)
   struct task_struct *c = list_head_to_task_struct(l);
   union task_union *uc = (union task_union*)c;
 
+  struct list_head *lh_t = list_first(&free_threadqueue);
+  list_del(lh_t);
+  struct thread_struct *ts = list_head_to_thread_struct(lh_t);
+  union thread_union *tu = (union thread_union*)ts;
+
   c->PID=0;
+  ts->TID = 0;
 
-  c->total_quantum=DEFAULT_QUANTUM;
+  c->total_quantum=DEFAULT_QUANTUM_P;
 
-  init_stats(&c->p_stats);
+  //init_stats(&c->p_stats);
 
   allocate_DIR(c);
 
-  uc->stack[KERNEL_STACK_SIZE-1]=(unsigned long)&cpu_idle; /* Return address */
-  uc->stack[KERNEL_STACK_SIZE-2]=0; /* register ebp */
+  tu->stack[KERNEL_STACK_SIZE-1]=(unsigned long)&cpu_idle; /* Return address */
+  tu->stack[KERNEL_STACK_SIZE-2]=0; /* register ebp */
 
-  c->register_esp=(int)&(uc->stack[KERNEL_STACK_SIZE-2]); /* top of the stack */
+  ts->register_esp=(int)&(uc->stack[KERNEL_STACK_SIZE-2]); /* top of the stack */
 
-  idle_task=c;
+  idle_task=ts;
 }
 
 void setMSR(unsigned long msr_number, unsigned long high, unsigned long low);
@@ -244,7 +254,6 @@ void init_task1(void) {
   struct list_head *l = list_first(&freequeue);
   list_del(l);
   struct task_struct *c = list_head_to_task_struct(l);
-  union task_union *uc = (union task_union*)c;
 
   struct list_head *lh_t = list_first(&free_threadqueue);
   list_del(lh_t);
@@ -253,7 +262,7 @@ void init_task1(void) {
 
   c->PID=1;
 
-  c->total_quantum=DEFAULT_QUANTUM;
+  c->total_quantum=DEFAULT_QUANTUM_P;
 
   c->state=ST_RUN;
 
@@ -268,7 +277,9 @@ void init_task1(void) {
   ts->TID = 8;
   ts->dir_pages_baseAddr = c->dir_pages_baseAddr;
   ts->p = c;
-
+  ts->state = ST_RUN;
+  ts->quantum = DEFAULT_QUANTUM_T;
+  remaining_quantum_t = ts->quantum;
   tss.esp0=(DWord)&(tu->stack[KERNEL_STACK_SIZE]);
   setMSR(0x175, 0, (unsigned long)&(tu->stack[KERNEL_STACK_SIZE]));
 
@@ -285,6 +296,8 @@ void init_freequeue()
   for (i=0; i<NR_TASKS; i++)
   {
     task[i].task.PID=-1;
+    INIT_LIST_HEAD(&(task[i].task.ready_threads));
+    INIT_LIST_HEAD(&(task[i].task.blocked_threads));
     list_add_tail(&(task[i].task.list), &freequeue);
   }
 }
@@ -305,9 +318,8 @@ void init_sched()
   init_freethreadqueue();
 }
 
-struct task_struct* current_p()
-{
-  return current_t() -> p;
+struct task_struct* current() {
+  return (struct task_struct*)(current_t()->p);
 }
 
 struct thread_struct* current_t() {
@@ -328,7 +340,7 @@ struct thread_struct* list_head_to_thread_struct(struct list_head * l) {
 /* Do the magic of a task switch */
 void inner_task_switch(union thread_union *new)
 {
-  page_table_entry *new_DIR = get_DIR(&new->task);
+  page_table_entry *new_DIR = get_DIR(new->task.p);
 
   /* Update TSS and MSR to make it point to the new stack */
   tss.esp0=(int)&(new->stack[KERNEL_STACK_SIZE]);
@@ -344,7 +356,7 @@ void inner_task_switch(union thread_union *new)
 /* Force a task switch assuming that the scheduler does not work with priorities */
 void force_task_switch()
 {
-  update_process_state_rr(current_p(), &readyqueue);
+  update_process_state_rr(current(), &readyqueue);
 
   sched_next_process_rr();
 }

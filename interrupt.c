@@ -38,8 +38,28 @@ void clock_routine()
   zeos_show_clock();
   zeos_ticks ++;
 
-  //schedule();
+  schedule();
 }
+
+/*void keyboard_routine() {
+	unsigned char reg, key;
+	reg = inb(0x60);
+	unsigned int aux = reg & 0x00000080;
+	key = char_map[reg & 0x7F];
+	if (!aux) {
+		if (key =='\0') key = 'C';
+    else if (key == 'd') {
+      struct list_head* next = list_first(&readyqueue);
+      struct task_struct* nextt = list_head_to_task_struct(next);
+      task_switch((union task_union * ) nextt);
+    }
+    else if (key == 'h') {
+      task_switch(idle_task);
+    }
+		printc_xy(0,0, key);
+
+	}
+}*/
 
 void keyboard_routine()
 {

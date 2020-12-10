@@ -2,21 +2,29 @@
 
 
 
-pthread_create(struct task_union* t, void *(* start_routine) (void *), void* arg) {
+int pthread_create(struct thread_struct* t, void *(* start_routine) (void *), void* arg) {
   if (!access_ok(VERIFY_READ, start_routine, sizeof(void*))) return -EFAULT;
 
-  copy_data(current(), t, (unsigned int) sizeof(union task_union));
+  union thread_union* ut = (union thread_union*) t;
 
-  int reg_ebp = (int) get_ebp();
-  reg_ebp = (reg_ebp - (int) current()) + (int)(t);
+  copy_data(current_t(), ut, (unsigned int) sizeof(union thread_union));
 
-  t->task.register_esp = reg_ebp + sizeof(DWord);
+  int register_ebp = (int) get_ebp();
+  register_ebp = (register_ebp - (int)current_t()) + (int)(ut);
+
+  ut->task.register_esp = register_ebp + sizeof(DWord);
   DWord temp_ebp=*(DWord*)reg_ebp;
+  ut>task.register_esp-=sizeof(DWord);
+  *(DWord*)(ut->task.register_esp)=(DWord)start_routine;
+  ut->task.register_esp-=sizeof(DWord);
+  *(DWord*)(ut->task.register_esp)=temp_ebp;
 
-
-
-
-  t->task.state = ST_READY;
-  list_add_tail(&(t->task.list), &readyqueue);
+  t->TID = 2; //Numero random;
+  t->state = ST_READY;
+  list_add_tail(&(t->list), &(current()->ready_threads));
   return 0;
+}
+
+pthread_exit(void* statuts) {
+  ;
 }
