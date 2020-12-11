@@ -4,8 +4,8 @@ char buff[24];
 
 int pid;
 
-char* b = "Hola soy init y tengo un pid = ";
-char* a = "Hola soy otro proceso y tengo un pid = ";
+char* b = "Hola, soy init y tengo un pid = ";
+char* a = "Hola, no soy init y tengo un pid = ";
 char* c = "Hola\n";
 char* d = "Adeu\n";
 char* n = "\n";
@@ -25,8 +25,8 @@ void adeu() {
 
 int __attribute__ ((__section__(".text.main")))
 main(void) {
-    struct thread_struct* t;
-    struct thread_struct* t1;
+    struct thread_struct* t = NULL;
+    struct thread_struct* t1 = NULL;
     pid = fork(); //Comprobar que el planificador de 1r nivel funciona*/
     if (pid == 0) {
         write(1, a, strlen(a));

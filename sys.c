@@ -217,7 +217,7 @@ int sys_pthread_create(struct thread_struct* t, void *(* start_routine) (void *)
     copy_data(current_t(), uthread, (unsigned int) sizeof(union thread_union));
     
     int index  = ((int) get_ebp() - (int) current_t())/sizeof(int);
-    uthread->task.register_esp = &(uthread->stack[index]);
+    uthread->task.register_esp = (int) &(uthread->stack[index]);
     uthread->stack[KERNEL_STACK_SIZE - 5]=(int)start_routine;
     
     uthread->task.TID = (current_p()->nthread)++;

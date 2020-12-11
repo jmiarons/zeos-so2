@@ -333,7 +333,7 @@ void init_freethreadqueue() {
 void init_mutexqueue() {
   INIT_LIST_HEAD(&mutexqueue);
 
-  for (int i = 0; NR_THREADS; i++) {
+  for (int i = 0; i < NR_MUTEX; i++) {
     mutex_vector[i].TID = -1;
     mutex_vector[i].PID = -1;
     mutex_vector[i].locked = 0;
