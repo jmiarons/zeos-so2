@@ -245,18 +245,18 @@ int sys_pthread_join(struct thread_struct *thread, void **value_ptr)
 int sys_pthread_exit(void *value_ptr) {
   int i;
 
-  page_table_entry *thread_PT = get_PT_thread(current_t());
+  /*page_table_entry *thread_PT = get_PT_thread(current_t());
 
   for (i=0; i<NUM_PAG_DATA; ++i)
   {
     del_ss_pag(thread_PT, PAG_LOG_INIT_DATA+i);
-  }
+  }*/
 
   list_add_tail(&(current_t()->list), &free_threadqueue);
 
-  current_t() -> TID = -1;
+  current_t()->TID = -1;
 
-  current_t() -> p = NULL;
+  current_t()->p = NULL;
 
   sched_next_thread_rr();
 
