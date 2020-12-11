@@ -27,6 +27,8 @@ void exit();
 
 int yield();
 
+int pthread_create(struct thread_struct* t , void *(* start_routine) (void *), void* arg);
+
 int pthread_join(struct thread_struct *thread, void **value_ptr);
 
 int pthread_exit(void *value_ptr); 

@@ -84,6 +84,24 @@ ENTRY(yield)
 	call syscall_sysenter
 	popl %ebp
 	ret
+	
+	
+	
+ENTRY(pthread_create)
+	pushl %ebp
+	movl %esp, %ebp
+	pushl %ebx;  // Save EBX, ESI and EDI if modified
+	movl $12, %eax
+	movl 0x8(%ebp), %ebx;	//t
+	movl 0xC(%ebp), %ecx;	//routine
+	movl 0x10(%ebp), %edx;	//arg
+	call syscall_sysenter
+	popl %ebx
+	test %eax, %eax
+	js nok	// if (eax < 0) ->
+	popl %ebp
+	ret
+
 
 /* int pthread_join(struct thread_struct *thread, void **value_ptr) */
 ENTRY(pthread_join)

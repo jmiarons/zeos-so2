@@ -199,7 +199,6 @@ void sched_next_thread_rr(void)
   list_del(e);
 
   t->state=ST_RUN;
-  t->state=ST_RUN;
   remaining_quantum_t=get_quantum_t(t);
 
   task_switch((union thread_union*)t);
@@ -219,6 +218,7 @@ void schedule()
   }
   else if (scheduler == 2)
   {
+    printk("He entrado aqui\n");
     update_thread_state_rr(current_t(), &(current_p()->ready_threads));
     sched_next_thread_rr();
   }
@@ -271,6 +271,7 @@ void init_task1(void) {
 
   c->state=ST_RUN;
 
+  c->nthread = 1;
   remaining_quantum_p=c->total_quantum;
 
   //init_stats(&c->p_stats);
@@ -279,7 +280,7 @@ void init_task1(void) {
 
   set_user_pages(c);
 
-  ts->TID = 8;
+  ts->TID = (c->nthread)++;
   ts->dir_pages_baseAddr = c->dir_pages_baseAddr;
   ts->p = c;
   ts->state = ST_RUN;

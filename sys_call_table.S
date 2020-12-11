@@ -14,7 +14,7 @@ ENTRY (sys_call_table)
 	.long sys_ni_syscall	//9
 	.long sys_gettime			//10
 	.long sys_ni_syscall	//11
-	.long sys_ni_syscall	//12
+	.long sys_pthread_create	//12
 	.long sys_yield				//13
 	.long sys_ni_syscall	//14
 	.long sys_ni_syscall	//15
@@ -27,7 +27,7 @@ ENTRY (sys_call_table)
 	.long sys_ni_syscall	//22
 	.long sys_ni_syscall	//23
 	.long sys_ni_syscall	//24
-	.long sys_ni_syscall	//25
+	.long sys_pthread_exit  //25
 	.long sys_ni_syscall	//26
 	.long sys_ni_syscall	//27
 	.long sys_ni_syscall	//28

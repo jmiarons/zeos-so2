@@ -128,8 +128,9 @@ int sys_fork(void)
   uchild->task.PID=++global_PID;
   uchild->task.state=ST_READY;
   uchild->task.total_quantum = DEFAULT_QUANTUM_P;
-
-  uthread->task.TID = 1;
+  uchild->task.nthread = 1;
+  
+  uthread->task.TID = (uchild->task.nthread)++;
   uthread->task.state = ST_READY;
   uthread->task.dir_pages_baseAddr = get_DIR((struct task_struct*)uchild);
   uthread->task.p = (struct task_struct*)uchild;
@@ -202,6 +203,38 @@ int sys_gettime()
   return zeos_ticks;
 }
 
+int sys_pthread_create(struct thread_struct* t, void *(* start_routine) (void *), void* arg) {
+    if (!access_ok(VERIFY_READ, start_routine, sizeof(void*))) return -EFAULT;
+    if (list_empty(&free_threadqueue)) return -ENOMEM;
+    
+    struct list_head *t_lh;
+    union thread_union *uthread;
+
+    t_lh = list_first(&free_threadqueue);
+    uthread = (union thread_union *)list_head_to_thread_struct(t_lh);
+
+    copy_data(current_t(), uthread, (unsigned int) sizeof(union thread_union));
+
+    int register_ebp = (int) get_ebp();
+    register_ebp = (register_ebp - (int)current_t()) + (int)(uthread);
+
+    uthread->task.register_esp = register_ebp + sizeof(DWord);
+    DWord temp_ebp=*(DWord*)register_ebp;
+    uthread->task.register_esp-=sizeof(DWord);
+    *(DWord*)(uthread->task.register_esp)=(DWord)start_routine;
+    uthread->task.register_esp-=sizeof(DWord);
+    *(DWord*)(uthread->task.register_esp)=temp_ebp;
+
+    uthread->task.TID = (current_p()->nthread)++;
+    uthread->task.state = ST_READY;
+    list_add_tail(&(uthread->task.list), &(current_p()->ready_threads));
+    return 0;
+}
+
+
+
+
+
 void sys_exit()
 {
   int i;
@@ -256,7 +289,7 @@ int sys_pthread_exit(void *value_ptr) {
 
   current_t()->TID = -1;
 
-  current_t()->p = NULL;
+  //current_t()->p = NULL;
 
   sched_next_thread_rr();
 
