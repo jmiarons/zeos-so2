@@ -212,6 +212,7 @@ int sys_pthread_create(struct thread_struct* t, void *(* start_routine) (void *)
 
     t_lh = list_first(&free_threadqueue);
     uthread = (union thread_union *)list_head_to_thread_struct(t_lh);
+    list_del(t_lh);
 
     copy_data(current_t(), uthread, (unsigned int) sizeof(union thread_union));
     
@@ -220,6 +221,7 @@ int sys_pthread_create(struct thread_struct* t, void *(* start_routine) (void *)
     uthread->stack[KERNEL_STACK_SIZE - 5]=(int)start_routine;
     
     uthread->task.TID = (current_p()->nthread)++;
+    uthread->task.quantum = DEFAULT_QUANTUM_T;
     uthread->task.state = ST_READY;
     t = (struct thread_struct*)uthread;
     list_add_tail(&(uthread->task.list), &(current_p()->ready_threads));
@@ -271,7 +273,6 @@ int sys_pthread_join(struct thread_struct *thread, void **value_ptr)
 }
 
 int sys_pthread_exit(void *value_ptr) {
-  int i;
 
   /*page_table_entry *thread_PT = get_PT_thread(current_t());
 

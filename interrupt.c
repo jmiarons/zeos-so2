@@ -17,11 +17,11 @@ Register    idtR;
 char char_map[] =
 {
   '\0','\0','1','2','3','4','5','6',
-  '7','8','9','0','\'','ï¿½','\0','\0',
+  '7','8','9','0','\'','¡','\0','\0',
   'q','w','e','r','t','y','u','i',
   'o','p','`','+','\0','\0','a','s',
-  'd','f','g','h','j','k','l','ï¿½',
-  '\0','ï¿½','\0','ï¿½','z','x','c','v',
+  'd','f','g','h','j','k','l','ñ',
+  '\0','º','\0','ç','z','x','c','v',
   'b','n','m',',','.','-','\0','*',
   '\0','\0','\0','\0','\0','\0','\0','\0',
   '\0','\0','\0','\0','\0','\0','\0','7',
@@ -37,34 +37,14 @@ void clock_routine()
 {
   zeos_show_clock();
   zeos_ticks ++;
-
+  
   schedule();
 }
-
-/*void keyboard_routine() {
-	unsigned char reg, key;
-	reg = inb(0x60);
-	unsigned int aux = reg & 0x00000080;
-	key = char_map[reg & 0x7F];
-	if (!aux) {
-		if (key =='\0') key = 'C';
-    else if (key == 'd') {
-      struct list_head* next = list_first(&readyqueue);
-      struct task_struct* nextt = list_head_to_task_struct(next);
-      task_switch((union task_union * ) nextt);
-    }
-    else if (key == 'h') {
-      task_switch(idle_task);
-    }
-		printc_xy(0,0, key);
-
-	}
-}*/
 
 void keyboard_routine()
 {
   unsigned char c = inb(0x60);
-
+  
   if (c&0x80) printc_xy(0, 0, char_map[c&0x7f]);
 }
 
@@ -130,7 +110,7 @@ void setIdt()
   /* Program interrups/exception service routines */
   idtR.base  = (DWord)idt;
   idtR.limit = IDT_ENTRIES * sizeof(Gate) - 1;
-
+  
   set_handlers();
 
   /* ADD INITIALIZATION CODE FOR INTERRUPT VECTOR */

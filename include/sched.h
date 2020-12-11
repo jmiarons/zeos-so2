@@ -9,9 +9,11 @@
 #include <types.h>
 #include <mm_address.h>
 #include <stats.h>
+#include <mutex.h>
 
 #define NR_TASKS      10
 #define NR_THREADS    20
+#define NR_MUTEX      20
 #define KERNEL_STACK_SIZE	1024
 
 #define DEFAULT_QUANTUM_P 20
@@ -57,6 +59,7 @@ union thread_union {
 
 extern union task_union protected_tasks[NR_TASKS+2];
 extern union thread_union thread_tasks[NR_THREADS + 2];
+extern struct mutex_t mutex_vector[NR_MUTEX+2];
 
 
 extern union task_union *task; /* Vector de tasques */
@@ -69,7 +72,8 @@ extern struct thread_struct *idle_task;
 
 extern struct list_head freequeue;
 extern struct list_head readyqueue;
-struct list_head free_threadqueue;
+extern struct list_head free_threadqueue;
+extern struct list_head mutexqueue;
 
 /* Inicialitza les dades del proces inicial */
 void init_task1(void);

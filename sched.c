@@ -22,6 +22,9 @@ union task_union protected_tasks[NR_TASKS+2]
 union thread_union thread_tasks[NR_THREADS + 2]
   __attribute__((__section__(".data.task")));
 
+struct mutex_t mutex_vector[NR_MUTEX + 2]
+  __attribute__((__section__(".data.mutex_t")));
+
 union task_union *task = &protected_tasks[1]; /* == union task_union task[NR_TASKS] */
 
 
@@ -39,6 +42,8 @@ extern struct list_head blocked;
 struct list_head freequeue;
 // Ready queue
 struct list_head readyqueue;
+
+struct list_head mutexqueue;
 
 struct list_head free_threadqueue;
 
@@ -122,8 +127,16 @@ void update_sched_data_rr(void)
 
 int needs_sched_rr(void)
 {
-  if ((remaining_quantum_p==0)&&(!list_empty(&readyqueue))) return 1;
-  if ((remaining_quantum_t==0)&&(!list_empty(&(current_p()->ready_threads)))) return 2;
+  //printk("thread update\n");
+  if ((remaining_quantum_p==0)&&(!list_empty(&readyqueue))) {
+          //printk("el need es igual a 1 \n");
+          return 1;
+  }
+
+  if ((remaining_quantum_t==0)&&(!list_empty(&(current_p()->ready_threads)))) {
+          //printk("el need es igual a 2\n");
+          return 2;
+  }
 
   if (remaining_quantum_p==0) remaining_quantum_p=get_quantum_p(current_p());
   if (remaining_quantum_t==0) remaining_quantum_t=get_quantum_t(current_t());
@@ -317,11 +330,24 @@ void init_freethreadqueue() {
   }
 }
 
+void init_mutexqueue() {
+  INIT_LIST_HEAD(&mutexqueue);
+
+  for (int i = 0; NR_THREADS; i++) {
+    mutex_vector[i].TID = -1;
+    mutex_vector[i].PID = -1;
+    mutex_vector[i].locked = 0;
+    INIT_LIST_HEAD(&(mutex_vector[i].blocked));
+    list_add_tail(&(mutex_vector[i].list), &mutexqueue);
+  }
+}
+
 void init_sched()
 {
   init_freequeue();
   INIT_LIST_HEAD(&readyqueue);
   init_freethreadqueue();
+  init_mutexqueue();
 }
 
 struct task_struct* current_p() {
