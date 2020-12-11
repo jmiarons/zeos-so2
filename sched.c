@@ -19,7 +19,7 @@
 union task_union protected_tasks[NR_TASKS+2]
   __attribute__((__section__(".data.task")));
 
-union thread_union thread_tasks[NR_TASKS + 2]
+union thread_union thread_tasks[NR_THREADS + 2]
   __attribute__((__section__(".data.task")));
 
 union task_union *task = &protected_tasks[1]; /* == union task_union task[NR_TASKS] */
@@ -218,7 +218,7 @@ void schedule()
   }
   else if (scheduler == 2)
   {
-    printk("He entrado aqui\n");
+    //printk("He entrado aqui\n");
     update_thread_state_rr(current_t(), &(current_p()->ready_threads));
     sched_next_thread_rr();
   }

@@ -11,6 +11,7 @@
 #include <stats.h>
 
 #define NR_TASKS      10
+#define NR_THREADS    20
 #define KERNEL_STACK_SIZE	1024
 
 #define DEFAULT_QUANTUM_P 20
@@ -55,7 +56,7 @@ union thread_union {
 };
 
 extern union task_union protected_tasks[NR_TASKS+2];
-extern union thread_union thread_tasks[NR_TASKS + 2];
+extern union thread_union thread_tasks[NR_THREADS + 2];
 
 
 extern union task_union *task; /* Vector de tasques */

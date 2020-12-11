@@ -214,19 +214,14 @@ int sys_pthread_create(struct thread_struct* t, void *(* start_routine) (void *)
     uthread = (union thread_union *)list_head_to_thread_struct(t_lh);
 
     copy_data(current_t(), uthread, (unsigned int) sizeof(union thread_union));
-
-    int register_ebp = (int) get_ebp();
-    register_ebp = (register_ebp - (int)current_t()) + (int)(uthread);
-
-    uthread->task.register_esp = register_ebp + sizeof(DWord);
-    DWord temp_ebp=*(DWord*)register_ebp;
-    uthread->task.register_esp-=sizeof(DWord);
-    *(DWord*)(uthread->task.register_esp)=(DWord)start_routine;
-    uthread->task.register_esp-=sizeof(DWord);
-    *(DWord*)(uthread->task.register_esp)=temp_ebp;
-
+    
+    int index  = ((int) get_ebp() - (int) current_t())/sizeof(int);
+    uthread->task.register_esp = &(uthread->stack[index]);
+    uthread->stack[KERNEL_STACK_SIZE - 5]=(int)start_routine;
+    
     uthread->task.TID = (current_p()->nthread)++;
     uthread->task.state = ST_READY;
+    t = (struct thread_struct*)uthread;
     list_add_tail(&(uthread->task.list), &(current_p()->ready_threads));
     return 0;
 }
