@@ -250,6 +250,31 @@ void sys_exit()
 
   current_p()->PID=-1;
 
+  while (!list_empty(&(current_p()->ready_threads))) {
+    struct thread_struct *t;
+    struct list_head *l;
+    l = list_first(&(current_p()->ready_threads));
+    t = list_head_to_thread_struct(l);
+    list_del(l);
+
+    list_add_tail(&(t->list), &free_threadqueue);
+
+    t->TID = -1;
+  }
+
+  while (!list_empty(&(current_p()->ready_threads))) {
+    struct thread_struct *t;
+    struct list_head *l;
+    l = list_first(&(current_p()->ready_threads));
+    t = list_head_to_thread_struct(l);
+    list_del(l);
+
+    list_add_tail(&(t->list), &free_threadqueue);
+
+    t->TID = -1;
+  }
+
+
   /* Restarts execution of the next process */
   sched_next_process_rr();
 }
@@ -284,8 +309,6 @@ int sys_pthread_exit(void *value_ptr) {
   list_add_tail(&(current_t()->list), &free_threadqueue);
 
   current_t()->TID = -1;
-
-  //current_t()->p = NULL;
 
   sched_next_thread_rr();
 

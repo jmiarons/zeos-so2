@@ -108,9 +108,9 @@ ENTRY(pthread_join)
 	pushl %ebp
 	movl %esp, %ebp
 	pushl %ebx;  // Save EBX, ESI and EDI if modified
-	movl $25, %eax //TODO actualizarlo para que esten correlativos todos los de threads
-	movl 0x8(%ebp), %ebx;	//pid
-	movl 0xC(%ebp), %ecx;	//st
+	movl $24, %eax 
+	movl 0x8(%ebp), %ebx;
+	movl 0xC(%ebp), %ecx;
 	call syscall_sysenter
 	popl %ebx
 	test %eax, %eax
@@ -123,11 +123,38 @@ ENTRY(pthread_exit)
 	pushl %ebp
 	movl %esp, %ebp
 	pushl %ebx;  // Save EBX, ESI and EDI if modified
-	movl $25, %eax //TODO actualizarlo para que esten correlativos todos los de threads
-	movl 0x8(%ebp), %ebx;	//pid
+	movl $25, %eax 
+	movl 0x8(%ebp), %ebx;
 	call syscall_sysenter
 	popl %ebx
 	test %eax, %eax
 	js nok	// if (eax < 0) -->
 	popl %ebp
 	ret
+
+/* int mutex_init(struct mutex_t *mutex) */
+ENTRY(mutex_init)
+	pushl %ebp
+	movl %esp, %ebp
+	pushl %ebx;  // Save EBX, ESI and EDI if modified
+	movl $26, %eax 
+	movl 0x8(%ebp), %ebx;	
+	call syscall_sysenter
+	popl %ebx
+	test %eax, %eax
+	js nok	// if (eax < 0) -->
+	popl %ebp
+	ret
+
+/* void mutex_destroy(struct mutex_t *mutex) */
+ENTRY(mutex_destroy)
+	pushl %ebp
+	movl %esp, %ebp
+	pushl %ebx;  // Save EBX, ESI and EDI if modified
+	movl $29, %eax 
+	movl 0x8(%ebp), %ebx;
+	call syscall_sysenter
+	popl %ebx
+	popl %ebp
+	ret
+
