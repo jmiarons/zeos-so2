@@ -30,6 +30,9 @@ int check_fd(int fd, int permissions)
 }
 
 
+
+
+
 int sys_ni_syscall()
 {
 	return -ENOSYS;
@@ -204,6 +207,7 @@ int sys_gettime()
 }
 
 int sys_pthread_create(struct thread_struct* t, void *(* start_routine) (void *), void* arg) {
+    
     if (!access_ok(VERIFY_READ, start_routine, sizeof(void*))) return -EFAULT;
     if (list_empty(&free_threadqueue)) return -ENOMEM;
     
@@ -214,17 +218,39 @@ int sys_pthread_create(struct thread_struct* t, void *(* start_routine) (void *)
     uthread = (union thread_union *)list_head_to_thread_struct(t_lh);
     list_del(t_lh);
 
-    copy_data(current_t(), uthread, (unsigned int) sizeof(union thread_union));
+    copy_data(current_t(), uthread, (int) sizeof(union thread_union));
     
-    int index  = ((int) get_ebp() - (int) current_t())/sizeof(int);
-    uthread->task.register_esp = (int) &(uthread->stack[index]);
+    //int index  = ((int) get_ebp() - (int) current_t())/sizeof(int);
+    uthread->stack[KERNEL_STACK_SIZE - 18] = 0;
+    uthread->task.register_esp = (int) &(uthread->stack[KERNEL_STACK_SIZE - 18]);
     uthread->stack[KERNEL_STACK_SIZE - 5]=(int)start_routine;
+    
+    page_table_entry* process_PT = get_PT(current_p());
+    unsigned int trobat = 0;
+    for (int pag = 0; !trobat; ++pag) {
+      if (process_PT[PAG_LOG_INIT_DATA + pag + NUM_PAG_DATA].bits.pbase_addr == 0) {
+        int new_ph_pag = alloc_frame();
+        process_PT[PAG_LOG_INIT_DATA + pag + NUM_PAG_DATA].entry = 0;
+        process_PT[PAG_LOG_INIT_DATA + pag + NUM_PAG_DATA].bits.pbase_addr = new_ph_pag;
+        process_PT[PAG_LOG_INIT_DATA + pag + NUM_PAG_DATA].bits.user = 1;
+        process_PT[PAG_LOG_INIT_DATA + pag + NUM_PAG_DATA].bits.rw = 1;
+        process_PT[PAG_LOG_INIT_DATA + pag + NUM_PAG_DATA].bits.present = 1;
+        trobat = 1;
+        unsigned long log_adress = ((PAG_LOG_INIT_DATA + pag + NUM_PAG_DATA + 1) << 12);
+        uthread->stack[KERNEL_STACK_SIZE - 2] = log_adress;
+      } 
+    }
+    
     
     uthread->task.TID = (current_p()->nthread)++;
     uthread->task.quantum = DEFAULT_QUANTUM_T;
     uthread->task.state = ST_READY;
-    t = (struct thread_struct*)uthread;
+    uthread->task.p = current_p();
+    uthread->task.dir_pages_baseAddr = current_p()->dir_pages_baseAddr;
+    t = (struct thread_struct *)uthread;
+
     list_add_tail(&(uthread->task.list), &(current_p()->ready_threads));
+    printk("Salgo del create\n");
     return 0;
 }
 

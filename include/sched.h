@@ -40,6 +40,7 @@ union task_union {
 
 /*A eliminar la pila de task_union*/
 
+
 struct thread_struct {
   int TID;
   page_table_entry * dir_pages_baseAddr;
@@ -56,6 +57,11 @@ union thread_union {
   struct thread_struct task;
   unsigned long stack[KERNEL_STACK_SIZE];
 };
+
+
+unsigned long user_stack[NR_THREADS][1024];
+int nr_threads;
+
 
 extern union task_union protected_tasks[NR_TASKS+2];
 extern union thread_union thread_tasks[NR_THREADS + 2];

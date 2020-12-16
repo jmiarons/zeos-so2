@@ -22,10 +22,14 @@ union task_union protected_tasks[NR_TASKS+2]
 union thread_union thread_tasks[NR_THREADS + 2]
   __attribute__((__section__(".data.task")));
 
-struct mutex_t mutex_vector[NR_MUTEX + 2]
-  __attribute__((__section__(".data.mutex_t")));
+struct mutex_t mutex_vector[NR_MUTEX + 2];
 
 union task_union *task = &protected_tasks[1]; /* == union task_union task[NR_TASKS] */
+
+unsigned long user_stack[NR_THREADS][1024];
+int nr_threads = 0;
+
+
 
 
 
@@ -129,12 +133,12 @@ int needs_sched_rr(void)
 {
   //printk("thread update\n");
   if ((remaining_quantum_p==0)&&(!list_empty(&readyqueue))) {
-          //printk("el need es igual a 1 \n");
+          printk("el need es igual a 1 \n");
           return 1;
   }
 
   if ((remaining_quantum_t==0)&&(!list_empty(&(current_p()->ready_threads)))) {
-          //printk("el need es igual a 2\n");
+          printk("el need es igual a 2\n");
           return 2;
   }
 
@@ -161,12 +165,16 @@ void update_process_state_rr(struct task_struct *t, struct list_head *dst_queue)
 
 void update_thread_state_rr(struct thread_struct *t, struct list_head *dst_queue)
 {
-  if (t->state!=ST_RUN) list_del(&(t->list));
+  printk("Hago el update\n"); // PETA AQUI
+  if (t->state != ST_RUN) list_del(&(t->list));
   if (dst_queue!=NULL)
   {
     list_add_tail(&(t->list), dst_queue);
-    if (dst_queue!=&(current_p()-> ready_threads)) t->state=ST_BLOCKED;
-    else t->state=ST_READY;
+    if (dst_queue!= &(current_p()-> ready_threads)) t->state=ST_BLOCKED;
+    else { 
+      printk("STREADY\n");
+      t->state=ST_READY;
+    }
   }
   else t->state=ST_RUN;
 }
@@ -190,8 +198,10 @@ void sched_next_process_rr(void)
     p->state=ST_RUN;
     remaining_quantum_p=get_quantum_p(p);
    }
-   else
+   else {
+    printk("He entrado al IDLE\n");
     t=idle_task;
+   }
 
   t->state=ST_RUN;
   remaining_quantum_t=get_quantum_t(t);
@@ -202,18 +212,19 @@ void sched_next_process_rr(void)
 
 void sched_next_thread_rr(void)
 {
+
+  printk("Buscando otro\n");
   struct list_head *e;
   struct thread_struct *t;
 
-  struct task_struct *p = current_p();
+  struct task_struct * p = current_p();
 
   e = list_first(&(p->ready_threads));
   t = list_head_to_thread_struct(e);
   list_del(e);
 
-  t->state=ST_RUN;
+  t->state = ST_RUN;
   remaining_quantum_t=get_quantum_t(t);
-
   task_switch((union thread_union*)t);
 }
 
@@ -223,6 +234,7 @@ void schedule()
   int scheduler = needs_sched_rr();
   if (scheduler == 1)
   {
+    printk("Cambio de proceso\n");
     update_process_state_rr(current_p(), &readyqueue);
     
     update_thread_state_rr(current_t(), &(current_p()->ready_threads));
@@ -234,6 +246,7 @@ void schedule()
     //printk("He entrado aqui\n");
     update_thread_state_rr(current_t(), &(current_p()->ready_threads));
     sched_next_thread_rr();
+    //printk("He salido de aqui\n");
   }
 }
 
@@ -261,7 +274,7 @@ void init_idle (void)
   tu->stack[KERNEL_STACK_SIZE-1]=(unsigned long)&cpu_idle; /* Return address */
   tu->stack[KERNEL_STACK_SIZE-2]=0; /* register ebp */
 
-  ts->register_esp=(int)&(uc->stack[KERNEL_STACK_SIZE-2]); /* top of the stack */
+  ts->register_esp=(int)&(tu->stack[KERNEL_STACK_SIZE-2]); /* top of the stack */
 
   idle_task=ts;
 }
@@ -285,6 +298,7 @@ void init_task1(void) {
   c->state=ST_RUN;
 
   c->nthread = 1;
+  
   remaining_quantum_p=c->total_quantum;
 
   //init_stats(&c->p_stats);
@@ -381,7 +395,8 @@ void inner_task_switch(union thread_union *new)
   /* TLB flush. New address space */
   set_cr3(new_DIR);
 
-  switch_stack(&current_t()->register_esp, new->task.register_esp);
+  //printk("Llego hasta la 393\n");
+  switch_stack(&(current_t()->register_esp), new->task.register_esp);
 }
 
 
