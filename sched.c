@@ -348,8 +348,7 @@ void init_mutexqueue() {
   INIT_LIST_HEAD(&mutexqueue);
 
   for (int i = 0; i < NR_MUTEX; i++) {
-    mutex_vector[i].TID = -1;
-    mutex_vector[i].PID = -1;
+    mutex_vector[i].ID = i;
     mutex_vector[i].locked = 0;
     INIT_LIST_HEAD(&(mutex_vector[i].blocked));
     list_add_tail(&(mutex_vector[i].list), &mutexqueue);
@@ -381,6 +380,10 @@ struct task_struct* list_head_to_task_struct(struct list_head *l)
 
 struct thread_struct* list_head_to_thread_struct(struct list_head * l) {
     return (struct thread_struct*)((int)l&0xfffff000);
+}
+
+struct mutex_t* list_head_to_mutex_struct(struct list_head * l) {
+    return (struct mutex_t*)((int)l&0xfffff000);
 }
 
 /* Do the magic of a task switch */

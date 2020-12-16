@@ -103,6 +103,7 @@ void force_task_switch(void);
 
 struct task_struct *list_head_to_task_struct(struct list_head *l);
 struct thread_struct* list_head_to_thread_struct(struct list_head * l);
+struct mutex_t* list_head_to_mutex_struct(struct list_head * l);
 
 int allocate_DIR(struct task_struct *t);
 

@@ -33,4 +33,8 @@ int pthread_join(struct thread_struct *thread, void **value_ptr);
 
 int pthread_exit(void *value_ptr); 
 
+int mutex_init(struct mutex_t *mutex);
+
+int mutex_destroy(struct mutex_t *mutex);
+
 #endif  /* __LIBC_H__ */
