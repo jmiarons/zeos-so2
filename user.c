@@ -12,13 +12,14 @@ char* e = "Hey\n";
 char* n = "\n";
 
 void hola() {
-    while (1);
+    write(1, c, strlen(c));
     pthread_exit(NULL);
 }
 
 void adeu() {
-    write(1, d, strlen(d));
-    while(1);
+    while (1) {
+        write(1, d, strlen(d));
+    }
     pthread_exit(NULL);
 }
 
@@ -27,10 +28,14 @@ void adeu() {
 int __attribute__ ((__section__(".text.main")))
 main(void) {
     struct thread_struct* t = NULL;
+    struct thread_struct* t1 = NULL;
+    
     pthread_create(t, &hola, NULL);
+    //pthread_create(t1, &adeu, NULL);
 
+    pthread_join(t, NULL);
 
     while(1) { 
-        //write(1, d, strlen(d));
+        write(1, e, strlen(e));
     }
 }

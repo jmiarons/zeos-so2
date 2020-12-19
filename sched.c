@@ -133,12 +133,10 @@ int needs_sched_rr(void)
 {
   //printk("thread update\n");
   if ((remaining_quantum_p==0)&&(!list_empty(&readyqueue))) {
-          printk("el need es igual a 1 \n");
           return 1;
   }
 
   if ((remaining_quantum_t==0)&&(!list_empty(&(current_p()->ready_threads)))) {
-          printk("el need es igual a 2\n");
           return 2;
   }
 
@@ -165,14 +163,13 @@ void update_process_state_rr(struct task_struct *t, struct list_head *dst_queue)
 
 void update_thread_state_rr(struct thread_struct *t, struct list_head *dst_queue)
 {
-  printk("Hago el update\n"); // PETA AQUI
+  printk(""); // NO SABEMOS XQ PERO ZEOS AMA ESTE PRINTK
   if (t->state != ST_RUN) list_del(&(t->list));
   if (dst_queue!=NULL)
   {
     list_add_tail(&(t->list), dst_queue);
     if (dst_queue!= &(current_p()-> ready_threads)) t->state=ST_BLOCKED;
     else { 
-      printk("STREADY\n");
       t->state=ST_READY;
     }
   }
@@ -212,8 +209,6 @@ void sched_next_process_rr(void)
 
 void sched_next_thread_rr(void)
 {
-
-  printk("Buscando otro\n");
   struct list_head *e;
   struct thread_struct *t;
 
@@ -221,9 +216,7 @@ void sched_next_thread_rr(void)
 
   e = list_first(&(p->ready_threads));
   t = list_head_to_thread_struct(e);
-  list_del(e);
-
-  t->state = ST_RUN;
+  update_thread_state_rr(t,NULL);
   remaining_quantum_t=get_quantum_t(t);
   task_switch((union thread_union*)t);
 }
@@ -234,7 +227,6 @@ void schedule()
   int scheduler = needs_sched_rr();
   if (scheduler == 1)
   {
-    printk("Cambio de proceso\n");
     update_process_state_rr(current_p(), &readyqueue);
     
     update_thread_state_rr(current_t(), &(current_p()->ready_threads));

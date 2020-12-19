@@ -206,6 +206,7 @@ int sys_gettime()
   return zeos_ticks;
 }
 
+
 int sys_pthread_create(struct thread_struct* t, void *(* start_routine) (void *), void* arg) {
     
     if (!access_ok(VERIFY_READ, start_routine, sizeof(void*))) return -EFAULT;
@@ -247,10 +248,10 @@ int sys_pthread_create(struct thread_struct* t, void *(* start_routine) (void *)
     uthread->task.state = ST_READY;
     uthread->task.p = current_p();
     uthread->task.dir_pages_baseAddr = current_p()->dir_pages_baseAddr;
-    t = (struct thread_struct *)uthread;
+    
+    t = &(uthread->task);
 
     list_add_tail(&(uthread->task.list), &(current_p()->ready_threads));
-    printk("Salgo del create\n");
     return 0;
 }
 
@@ -288,10 +289,10 @@ void sys_exit()
     t->TID = -1;
   }
 
-  while (!list_empty(&(current_p()->ready_threads))) {
+  while (!list_empty(&(current_p()->blocked_threads))) {
     struct thread_struct *t;
     struct list_head *l;
-    l = list_first(&(current_p()->ready_threads));
+    l = list_first(&(current_p()->blocked_threads));
     t = list_head_to_thread_struct(l);
     list_del(l);
 
@@ -312,33 +313,45 @@ int sys_yield()
   return 0;
 }
 
-int sys_pthread_join(struct thread_struct *thread, void **value_ptr) 
+int sys_pthread_join(struct thread_struct * thread, void **value_ptr) 
 {
   //recorrer vector de threads buscando si existe
-  if (current_p()->nthread < 2) return -1; //TODO buscar el error que toca
-  current_t()->blocked_by = thread->TID;
+  //if (current_p()->nthread < 2) return -1; //TODO buscar el error que toca
+  
+  struct thread_struct* local_t;
+
+  printk("Llego aqui\n");
+  copy_from_user(thread, local_t, sizeof(struct thread_struct));
+
+  printk("Llego aqui\n");
+  
+  current_t()->blocked_by = local_t->TID;
+  
   update_thread_state_rr(current_t(), &(current_p()->blocked_threads));
   sched_next_thread_rr();
   //descubrir que hace value_ptr
   return 0;
 }
 
-int sys_pthread_exit(void *value_ptr) {
-
-  /*page_table_entry *thread_PT = get_PT_thread(current_t());
-
-  for (i=0; i<NUM_PAG_DATA; ++i)
-  {
-    del_ss_pag(thread_PT, PAG_LOG_INIT_DATA+i);
-  }*/
+int sys_pthread_exit(void * value_ptr) {
 
   list_add_tail(&(current_t()->list), &free_threadqueue);
 
   current_t()->TID = -1;
 
-  sched_next_thread_rr();
+  value_ptr = 0;
+  struct list_head *i;
 
-  //TODO Usar value_ptr o hacer una funcion para controlar los blockeds que se han hecho con el join
+  list_for_each(i, &(current_p()->blocked_threads)) {
+    struct thread_struct* t;
+    t = list_head_to_thread_struct(i);
+    if (t->blocked_by == current_t()->TID) {
+      update_thread_state_rr(t, &(current_p()->ready_threads));
+    }
+  }
+
+
+  sched_next_thread_rr();
 
   return 0;
 }
