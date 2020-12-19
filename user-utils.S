@@ -86,7 +86,7 @@ ENTRY(yield)
 	ret
 	
 	
-	
+/* int pthread_create(struct thread_struct* t , void *(* start_routine) (void *), void* arg) */
 ENTRY(pthread_create)
 	pushl %ebp
 	movl %esp, %ebp
@@ -138,6 +138,34 @@ ENTRY(mutex_init)
 	movl %esp, %ebp
 	pushl %ebx;  // Save EBX, ESI and EDI if modified
 	movl $26, %eax 
+	movl 0x8(%ebp), %ebx;	
+	call syscall_sysenter
+	popl %ebx
+	test %eax, %eax
+	js nok	// if (eax < 0) -->
+	popl %ebp
+	ret
+
+/* int mutex_lock(struct mutex_t *mutex) */
+ENTRY(mutex_lock)
+	pushl %ebp
+	movl %esp, %ebp
+	pushl %ebx;  // Save EBX, ESI and EDI if modified
+	movl $27, %eax 
+	movl 0x8(%ebp), %ebx;	
+	call syscall_sysenter
+	popl %ebx
+	test %eax, %eax
+	js nok	// if (eax < 0) -->
+	popl %ebp
+	ret
+
+/* int mutex_unlock(struct mutex_t *mutex) */
+ENTRY(mutex_unlock)
+	pushl %ebp
+	movl %esp, %ebp
+	pushl %ebx;  // Save EBX, ESI and EDI if modified
+	movl $28, %eax 
 	movl 0x8(%ebp), %ebx;	
 	call syscall_sysenter
 	popl %ebx
