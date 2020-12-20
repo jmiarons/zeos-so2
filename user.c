@@ -27,22 +27,17 @@ void adeu() {
 
 int __attribute__ ((__section__(".text.main")))
 main(void) {
-    struct thread_struct* t = NULL;
-    struct thread_struct* t1 = NULL;
-    struct mutex_t* mutex = NULL;
     
-    pthread_create(t, &hola, NULL);
-    //pthread_create(t1, &adeu, NULL);
+    int id;
+    pthread_create(&id, &hola, NULL);
     
-    int ID = mutex_init(mutex);
+    itoa(id, buff);
+    write(1, buff, strlen(buff));
 
-    char buffer[16];
-    itoa(ID, buffer);
-    write(1, buffer, strlen(buffer));
 
-    //pthread_join(t, NULL);
+    pthread_join(&id, NULL);
 
+    write(1, e, strlen(e));
     while(1) { 
-        write(1, e, strlen(e));
     }
 }

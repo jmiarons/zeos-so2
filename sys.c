@@ -207,7 +207,7 @@ int sys_gettime()
 }
 
 
-int sys_pthread_create(struct thread_struct* t, void *(* start_routine) (void *), void* arg) {
+int sys_pthread_create(int* id, void *(* start_routine) (void *), void* arg) {
     
     if (!access_ok(VERIFY_READ, start_routine, sizeof(void*))) return -EFAULT;
     if (list_empty(&free_threadqueue)) return -ENOMEM;
@@ -221,7 +221,7 @@ int sys_pthread_create(struct thread_struct* t, void *(* start_routine) (void *)
 
     copy_data(current_t(), uthread, (int) sizeof(union thread_union));
     
-    //int index  = ((int) get_ebp() - (int) current_t())/sizeof(int);
+    
     uthread->stack[KERNEL_STACK_SIZE - 18] = 0;
     uthread->task.register_esp = (int) &(uthread->stack[KERNEL_STACK_SIZE - 18]);
     uthread->stack[KERNEL_STACK_SIZE - 5]=(int)start_routine;
@@ -249,7 +249,7 @@ int sys_pthread_create(struct thread_struct* t, void *(* start_routine) (void *)
     uthread->task.p = current_p();
     uthread->task.dir_pages_baseAddr = current_p()->dir_pages_baseAddr;
     
-    t = &(uthread->task);
+    *id = uthread->task.TID;
 
     list_add_tail(&(uthread->task.list), &(current_p()->ready_threads));
     return 0;
@@ -313,23 +313,15 @@ int sys_yield()
   return 0;
 }
 
-int sys_pthread_join(struct thread_struct * thread, void **value_ptr) 
-{
-  //recorrer vector de threads buscando si existe
-  //if (current_p()->nthread < 2) return -1; //TODO buscar el error que toca
+int sys_pthread_join(int* id, void **value_ptr) {
+  if (current_p()->nthread < 2) return -EFAULT;
   
-  struct thread_struct* local_t;
+  current_t()->blocked_by = *id;
 
-  printk("Llego aqui\n");
-  copy_from_user(thread, local_t, sizeof(struct thread_struct));
-
-  printk("Llego aqui\n");
-  
-  current_t()->blocked_by = local_t->TID;
-  
   update_thread_state_rr(current_t(), &(current_p()->blocked_threads));
+  
   sched_next_thread_rr();
-  //descubrir que hace value_ptr
+  
   return 0;
 }
 
@@ -337,19 +329,36 @@ int sys_pthread_exit(void * value_ptr) {
 
   list_add_tail(&(current_t()->list), &free_threadqueue);
 
-  current_t()->TID = -1;
-
   value_ptr = 0;
   struct list_head *i;
+  struct thread_struct* t;
 
-  list_for_each(i, &(current_p()->blocked_threads)) {
-    struct thread_struct* t;
-    t = list_head_to_thread_struct(i);
+  if (!list_empty(&current_p()->blocked_threads)) {
+    i = list_first(&current_p()->blocked_threads);
+    list_del(i);
+    list_add_tail(i, &current_p()->blocked_threads);
+    struct list_head* it;
+    it = list_first(&current_p()->blocked_threads);
+    while (it != i) {
+      it = list_first(&current_p()->blocked_threads);
+      t = list_head_to_thread_struct(it);
+      if (t->blocked_by == current_t()->TID) {
+        printk("Te encontre\n");
+        update_thread_state_rr(t, &(current_p()->ready_threads));
+        printk("Salgo\n");
+      }
+      list_del(it);
+      list_add_tail(it, &current_p()->blocked_threads);
+      it = list_first(&current_p()->blocked_threads);
+    }
+    it = list_first(&current_p()->blocked_threads);
+    t = list_head_to_thread_struct(it);
     if (t->blocked_by == current_t()->TID) {
+      printk("Te encontre\n");
       update_thread_state_rr(t, &(current_p()->ready_threads));
+      printk("Salgo\n");
     }
   }
-
 
   sched_next_thread_rr();
 

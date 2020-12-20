@@ -188,7 +188,6 @@ void sched_next_process_rr(void)
     list_del(e);
 
     p=list_head_to_task_struct(e);
-     //no creo que haga falta comprovar que un proceso tenga un thread en la readyqueue ya que por defecto siempre tiene
     a = list_first(&(p->ready_threads));
     t = list_head_to_thread_struct(a);
     list_del(a);
