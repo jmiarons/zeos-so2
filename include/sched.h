@@ -79,7 +79,6 @@ extern struct thread_struct *idle_task;
 extern struct list_head freequeue;
 extern struct list_head readyqueue;
 extern struct list_head free_threadqueue;
-extern struct list_head mutexqueue;
 
 /* Inicialitza les dades del proces inicial */
 void init_task1(void);
@@ -99,11 +98,10 @@ void switch_stack(int * save_sp, int new_sp);
 
 void sched_next_rr(void);
 
-void force_task_switch(void);
+void force_thread_switch(void);
 
 struct task_struct *list_head_to_task_struct(struct list_head *l);
 struct thread_struct* list_head_to_thread_struct(struct list_head * l);
-struct mutex_t* list_head_to_mutex_struct(struct list_head * l);
 
 int allocate_DIR(struct task_struct *t);
 

@@ -103,7 +103,7 @@ ENTRY(pthread_create)
 	ret
 
 
-/* int pthread_join(int* id, void **value_ptr) */
+/* int pthread_join(int *id, void **value_ptr) */
 ENTRY(pthread_join)
 	pushl %ebp
 	movl %esp, %ebp
@@ -132,7 +132,7 @@ ENTRY(pthread_exit)
 	popl %ebp
 	ret
 
-/* int mutex_init(struct mutex_t *mutex) */
+/* int mutex_init(int n) */
 ENTRY(mutex_init)
 	pushl %ebp
 	movl %esp, %ebp
@@ -146,7 +146,7 @@ ENTRY(mutex_init)
 	popl %ebp
 	ret
 
-/* int mutex_lock(struct mutex_t *mutex) */
+/* int mutex_lock(int n) */
 ENTRY(mutex_lock)
 	pushl %ebp
 	movl %esp, %ebp
@@ -160,7 +160,7 @@ ENTRY(mutex_lock)
 	popl %ebp
 	ret
 
-/* int mutex_unlock(struct mutex_t *mutex) */
+/* int mutex_unlock(int n) */
 ENTRY(mutex_unlock)
 	pushl %ebp
 	movl %esp, %ebp
@@ -174,7 +174,7 @@ ENTRY(mutex_unlock)
 	popl %ebp
 	ret
 
-/* void mutex_destroy(struct mutex_t *mutex) */
+/* void mutex_destroy(int n) */
 ENTRY(mutex_destroy)
 	pushl %ebp
 	movl %esp, %ebp

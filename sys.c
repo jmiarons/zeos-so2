@@ -292,7 +292,7 @@ void sys_exit()
 /* System call to force a task switch */
 int sys_yield()
 {
-  force_task_switch();
+  force_thread_switch();
   return 0;
 }
 

@@ -47,8 +47,6 @@ struct list_head freequeue;
 // Ready queue
 struct list_head readyqueue;
 
-struct list_head mutexqueue;
-
 struct list_head free_threadqueue;
 
 void init_stats(struct stats *s)
@@ -322,23 +320,11 @@ void init_freethreadqueue() {
   }
 }
 
-void init_mutexqueue() {
-  INIT_LIST_HEAD(&mutexqueue);
-
-  for (int i = 0; i < NR_MUTEX; i++) {
-    mutex_vector[i].ID = i;
-    mutex_vector[i].locked = 0;
-    INIT_LIST_HEAD(&(mutex_vector[i].blocked));
-    list_add_tail(&(mutex_vector[i].list), &mutexqueue);
-  }
-}
-
 void init_sched()
 {
   init_freequeue();
   INIT_LIST_HEAD(&readyqueue);
   init_freethreadqueue();
-  init_mutexqueue();
 }
 
 struct task_struct* current_p() {
@@ -360,10 +346,6 @@ struct thread_struct* list_head_to_thread_struct(struct list_head * l) {
     return (struct thread_struct*)((int)l&0xfffff000);
 }
 
-struct mutex_t* list_head_to_mutex_struct(struct list_head * l) {
-    return (struct mutex_t*)((int)l&0xfffff000);
-}
-
 /* Do the magic of a task switch */
 void inner_task_switch(union thread_union *new)
 {
@@ -379,11 +361,9 @@ void inner_task_switch(union thread_union *new)
   switch_stack(&(current_t()->register_esp), new->task.register_esp);
 }
 
-
-/* Force a task switch assuming that the scheduler does not work with priorities */
-void force_task_switch()
+void force_thread_switch()
 {
-  update_process_state_rr(current_p(), &readyqueue);
+  update_thread_state_rr(current_t(), &current_p()->ready_threads);
 
-  sched_next_process_rr();
+  sched_next_thread_rr();
 }
