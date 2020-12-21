@@ -29,10 +29,6 @@ int check_fd(int fd, int permissions)
   return 0;
 }
 
-
-
-
-
 int sys_ni_syscall()
 {
 	return -ENOSYS;
@@ -138,33 +134,24 @@ int sys_fork(void)
   uthread->task.dir_pages_baseAddr = get_DIR((struct task_struct*)uchild);
   uthread->task.p = (struct task_struct*)uchild;
 
-  //printk("Llego hasta la assignacion de mem\n");
-
   int register_ebp;		/* frame pointer */
   /* Map Parent's ebp to child's stack */
   register_ebp = (int) get_ebp();
-  register_ebp=(register_ebp - (int)current_t()) + (int)(uthread);//Al 99 % seguro de que es thread ya que es aritmetica de pila
+  register_ebp=(register_ebp - (int)current_t()) + (int)(uthread);
 
   uthread->task.register_esp=register_ebp + sizeof(DWord);
 
   DWord temp_ebp=*(DWord*)register_ebp;
-  /* Prepare child stack for context switch */
+  
   uthread->task.register_esp-=sizeof(DWord);
   *(DWord*)(uthread->task.register_esp)=(DWord)&ret_from_fork;
   uthread->task.register_esp-=sizeof(DWord);
   *(DWord*)(uthread->task.register_esp)=temp_ebp;
 
-  //printk("Llego hasta el manejo de la pila\n");
-
-  /* Set stats to 0 */
-  //init_stats(&(uchild->task.p_stats));
-
   /* Queue child process into readyqueue */
   uchild->task.state=ST_READY;
   list_add_tail(&(uchild->task.list), &readyqueue);
   list_add_tail(&(uthread->task.list), &(uchild->task.ready_threads));
-
-  //printk("Llego hasta el final\n");
 
   return uchild->task.PID;
 }
@@ -255,10 +242,6 @@ int sys_pthread_create(int* id, void *(* start_routine) (void *), void* arg) {
     return 0;
 }
 
-
-
-
-
 void sys_exit()
 {
   int i;
@@ -343,9 +326,7 @@ int sys_pthread_exit(void * value_ptr) {
       it = list_first(&current_p()->blocked_threads);
       t = list_head_to_thread_struct(it);
       if (t->blocked_by == current_t()->TID) {
-        printk("Te encontre\n");
         update_thread_state_rr(t, &(current_p()->ready_threads));
-        printk("Salgo\n");
       }
       list_del(it);
       list_add_tail(it, &current_p()->blocked_threads);
@@ -354,9 +335,7 @@ int sys_pthread_exit(void * value_ptr) {
     it = list_first(&current_p()->blocked_threads);
     t = list_head_to_thread_struct(it);
     if (t->blocked_by == current_t()->TID) {
-      printk("Te encontre\n");
       update_thread_state_rr(t, &(current_p()->ready_threads));
-      printk("Salgo\n");
     }
   }
 

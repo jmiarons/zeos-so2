@@ -86,13 +86,13 @@ ENTRY(yield)
 	ret
 	
 	
-/* int pthread_create(struct thread_struct* t , void *(* start_routine) (void *), void* arg) */
+/* int pthread_create(int* id, void *(* start_routine) (void *), void* arg) */
 ENTRY(pthread_create)
 	pushl %ebp
 	movl %esp, %ebp
 	pushl %ebx;  // Save EBX, ESI and EDI if modified
 	movl $12, %eax
-	movl 0x8(%ebp), %ebx;	//t
+	movl 0x8(%ebp), %ebx;	//id
 	movl 0xC(%ebp), %ecx;	//routine
 	movl 0x10(%ebp), %edx;	//arg
 	call syscall_sysenter
@@ -103,7 +103,7 @@ ENTRY(pthread_create)
 	ret
 
 
-/* int pthread_join(struct thread_struct *thread, void **value_ptr) */
+/* int pthread_join(int* id, void **value_ptr) */
 ENTRY(pthread_join)
 	pushl %ebp
 	movl %esp, %ebp

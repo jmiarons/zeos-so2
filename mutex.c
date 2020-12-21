@@ -3,7 +3,7 @@
 #include <list.h>
 #include <utils.h>
 
-int sys_mutex_init(struct mutex_t *mutex)
+int sys_mutex_init(int n)
 {
   struct list_head *l;
   struct mutex_t *m;
@@ -16,7 +16,7 @@ int sys_mutex_init(struct mutex_t *mutex)
   return m->ID;
 }
 
-int sys_mutex_lock(struct mutex_t *mutex)
+int sys_mutex_lock(int n)
 {
   if (mutex->locked) {
   update_thread_state_rr(current_t(), &(mutex->blocked));
@@ -26,7 +26,7 @@ int sys_mutex_lock(struct mutex_t *mutex)
   return 0;
 }
 
-int sys_mutex_unlock(struct mutex_t *mutex)
+int sys_mutex_unlock(int n)
 {
   struct list_head *l;
   struct thread_struct *t;
@@ -38,7 +38,7 @@ int sys_mutex_unlock(struct mutex_t *mutex)
   return 0;
 }
 
-void sys_mutex_destroy(struct mutex_t *mutex)
+void sys_mutex_destroy(int n)
 {
   mutex -> locked = 0;
   struct thread_struct *t;

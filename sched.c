@@ -129,9 +129,7 @@ void update_sched_data_rr(void)
   remaining_quantum_p--;
 }
 
-int needs_sched_rr(void)
-{
-  //printk("thread update\n");
+int needs_sched_rr(void) {
   if ((remaining_quantum_p==0)&&(!list_empty(&readyqueue))) {
           return 1;
   }
@@ -195,7 +193,6 @@ void sched_next_process_rr(void)
     remaining_quantum_p=get_quantum_p(p);
    }
    else {
-    printk("He entrado al IDLE\n");
     t=idle_task;
    }
 
@@ -220,8 +217,7 @@ void sched_next_thread_rr(void)
   task_switch((union thread_union*)t);
 }
 
-void schedule()
-{
+void schedule() {
   update_sched_data_rr();
   int scheduler = needs_sched_rr();
   if (scheduler == 1)
@@ -232,22 +228,17 @@ void schedule()
 
     sched_next_process_rr();
   }
-  else if (scheduler == 2)
-  {
-    //printk("He entrado aqui\n");
+  else if (scheduler == 2) {
     update_thread_state_rr(current_t(), &(current_p()->ready_threads));
     sched_next_thread_rr();
-    //printk("He salido de aqui\n");
   }
 }
 
-void init_idle (void)
-{
+void init_idle (void) {
+  
   struct list_head *l = list_first(&freequeue);
   list_del(l);
   struct task_struct *c = list_head_to_task_struct(l);
-  union task_union *uc = (union task_union*)c;
-
   struct list_head *lh_t = list_first(&free_threadqueue);
   list_del(lh_t);
   struct thread_struct *ts = list_head_to_thread_struct(lh_t);
@@ -258,14 +249,12 @@ void init_idle (void)
 
   c->total_quantum=DEFAULT_QUANTUM_P;
 
-  //init_stats(&c->p_stats);
-
   allocate_DIR(c);
 
   tu->stack[KERNEL_STACK_SIZE-1]=(unsigned long)&cpu_idle; /* Return address */
   tu->stack[KERNEL_STACK_SIZE-2]=0; /* register ebp */
 
-  ts->register_esp=(int)&(tu->stack[KERNEL_STACK_SIZE-2]); /* top of the stack */
+  ts->register_esp= (int)&(tu->stack[KERNEL_STACK_SIZE-2]); /* top of the stack */
 
   idle_task=ts;
 }
@@ -291,8 +280,6 @@ void init_task1(void) {
   c->nthread = 1;
   
   remaining_quantum_p=c->total_quantum;
-
-  //init_stats(&c->p_stats);
 
   allocate_DIR(c);
 
@@ -389,7 +376,6 @@ void inner_task_switch(union thread_union *new)
   /* TLB flush. New address space */
   set_cr3(new_DIR);
 
-  //printk("Llego hasta la 393\n");
   switch_stack(&(current_t()->register_esp), new->task.register_esp);
 }
 
